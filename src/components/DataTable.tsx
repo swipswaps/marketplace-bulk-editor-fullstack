@@ -12,6 +12,11 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<MarketplaceListing | null>(null);
 
+  // Extract unique categories from all listings for autocomplete
+  const uniqueCategories = Array.from(
+    new Set(data.map(item => item.CATEGORY).filter(cat => cat && cat.trim() !== ''))
+  ).sort();
+
   const handleEdit = (listing: MarketplaceListing) => {
     setEditingId(listing.id);
     setEditForm({ ...listing });
@@ -128,10 +133,12 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                     <td className="px-4 py-2 border-b">
                       <input
                         type="text"
+                        list="category-suggestions"
                         value={editForm.CATEGORY}
                         onChange={(e) => updateField('CATEGORY', e.target.value)}
                         className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="e.g. Home & Garden"
+                        autoComplete="off"
                       />
                     </td>
                     <td className="px-4 py-2 border-b">
@@ -200,6 +207,13 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Datalist for category autocomplete */}
+      <datalist id="category-suggestions">
+        {uniqueCategories.map((category, index) => (
+          <option key={index} value={category} />
+        ))}
+      </datalist>
     </div>
   );
 }
