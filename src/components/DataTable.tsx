@@ -54,7 +54,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   ).sort();
 
   const uniquePrices = Array.from(
-    new Set(data.map(item => item.PRICE).filter(price => price && Number(price) > 0))
+    new Set(data.map(item => item.PRICE).filter(price => price !== null && price !== undefined && price !== ''))
   ).sort((a, b) => Number(a) - Number(b));
 
   // Debug logging
@@ -597,7 +597,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                       autoFocus
                     />
                   ) : (
-                    <div>{listing.PRICE || <span className="text-gray-400 dark:text-gray-500">Click to edit</span>}</div>
+                    <div>{listing.PRICE}</div>
                   )}
                 </td>}
 
