@@ -18,6 +18,10 @@ function App() {
     return saved ? JSON.parse(saved) : false;
   });
 
+  // Undo/Redo state
+  const [history, setHistory] = useState<MarketplaceListing[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
+
   // Apply dark mode class to document
   useEffect(() => {
     if (darkMode) {
@@ -30,14 +34,65 @@ function App() {
 
   const handleDataLoaded = (newData: MarketplaceListing[]) => {
     // Merge with existing data
-    setListings(prev => [...prev, ...newData]);
+    const updatedListings = [...listings, ...newData];
+    updateListingsWithHistory(updatedListings);
   };
 
   const handleClearAll = () => {
     if (confirm('Are you sure you want to clear all listings?')) {
-      setListings([]);
+      updateListingsWithHistory([]);
     }
   };
+
+  // Update listings and add to history
+  const updateListingsWithHistory = (newListings: MarketplaceListing[]) => {
+    // Truncate history if we're not at the end
+    const newHistory = history.slice(0, historyIndex + 1);
+
+    // Add new state to history (keep last 50 states)
+    newHistory.push(newListings);
+    if (newHistory.length > 50) {
+      newHistory.shift();
+    }
+
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+    setListings(newListings);
+  };
+
+  // Undo handler
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setListings(history[newIndex]);
+    }
+  };
+
+  // Redo handler
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setListings(history[newIndex]);
+    }
+  };
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, history]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -54,6 +109,32 @@ function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Undo/Redo Buttons */}
+            <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
+              <button
+                onClick={handleUndo}
+                disabled={historyIndex <= 0}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Undo (Ctrl+Z)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7v6h6"/>
+                  <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                </svg>
+              </button>
+              <button
+                onClick={handleRedo}
+                disabled={historyIndex >= history.length - 1}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Redo (Ctrl+Y)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 7v6h-6"/>
+                  <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+                </svg>
+              </button>
+            </div>
+
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -101,7 +182,7 @@ function App() {
                 <div className="p-6">
                   <DataTable
                     data={listings}
-                    onUpdate={setListings}
+                    onUpdate={updateListingsWithHistory}
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSortChange={(field, direction) => {
