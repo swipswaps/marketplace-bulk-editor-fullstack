@@ -34,12 +34,16 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
   useEffect(() => {
     if (!resizing) return;
 
+    console.log('Starting resize for column:', resizing.column);
+
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
       const delta = e.clientX - resizing.startX;
       const newWidth = Math.max(80, resizing.startWidth + delta);
+
+      console.log('Resizing:', { delta, newWidth, clientX: e.clientX, startX: resizing.startX });
 
       setColumnWidths(prev => ({
         ...prev,
@@ -50,6 +54,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
     const handleMouseUp = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      console.log('Resize ended');
       setResizing(null);
     };
 
@@ -180,33 +185,36 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                       <ArrowUpDown size={14} className="text-gray-400" />
                     )}
                   </div>
-                  {/* Resize handle - wider hit area */}
+                  {/* Resize handle */}
                   <div
-                    className="absolute top-0 right-0 h-full cursor-col-resize group-hover:bg-blue-100"
+                    className="absolute top-0 h-full cursor-col-resize"
                     style={{
+                      right: '-4px',
                       width: '8px',
-                      marginRight: '-4px',
-                      background: resizing?.column === field ? '#3b82f6' : 'transparent',
-                      zIndex: 20,
+                      zIndex: 30,
+                      borderRight: resizing?.column === field ? '2px solid #3b82f6' : '2px solid transparent',
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      console.log('Resize handle mousedown', field);
                       setResizing({
                         column: field,
                         startX: e.clientX,
                         startWidth: columnWidths[field],
                       });
                     }}
-                  >
-                    {/* Visual indicator line */}
-                    <div
-                      className="absolute right-0 top-0 h-full w-0.5 bg-gray-300 group-hover:bg-blue-500"
-                      style={{
-                        background: resizing?.column === field ? '#3b82f6' : undefined,
-                      }}
-                    />
-                  </div>
+                    onMouseEnter={(e) => {
+                      const target = e.currentTarget as HTMLElement;
+                      target.style.borderRight = '2px solid #3b82f6';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (resizing?.column !== field) {
+                        const target = e.currentTarget as HTMLElement;
+                        target.style.borderRight = '2px solid transparent';
+                      }
+                    }}
+                  />
                 </th>
               ))}
               <th className="px-4 py-2 border-b text-left font-medium text-gray-700">
