@@ -174,7 +174,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
             ))}
             <col style={{ width: '100px' }} />
           </colgroup>
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-100 sticky top-0 z-10">
             <tr>
               {[
                 { field: 'TITLE' as keyof MarketplaceListing, label: 'Title' },
@@ -186,13 +186,17 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
               ].map(({ field, label }, colIndex) => (
                 <th
                   key={field}
-                  className="border-b text-left font-medium text-gray-700 select-none"
+                  className={`border-b text-left font-medium select-none ${
+                    sortField === field ? 'bg-blue-100 text-blue-900' : 'text-gray-700'
+                  }`}
                   style={{ position: 'relative', padding: 0 }}
                 >
                   <div style={{ display: 'flex', alignItems: 'stretch' }}>
                     {/* Sortable header content */}
                     <div
-                      className="flex items-center gap-2 cursor-pointer hover:text-blue-600 px-4 py-2"
+                      className={`flex items-center gap-2 cursor-pointer px-4 py-2 ${
+                        sortField === field ? 'font-semibold' : 'hover:text-blue-600'
+                      }`}
                       style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}
                       onClick={() => handleSort(field)}
                     >
@@ -239,29 +243,36 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
           </thead>
           <tbody>
             {sortedData.map((listing) => (
-              <tr key={listing.id} className="hover:bg-gray-50">
+              <tr key={listing.id} className="hover:bg-blue-50 hover:shadow-sm transition-colors">
                 {/* Title */}
                 <td
                   className="px-4 py-2 border-b cursor-text"
                   onClick={() => setEditingCell({ id: listing.id, field: 'TITLE' })}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'TITLE' ? (
-                    <input
-                      type="text"
-                      list="title-suggestions"
-                      value={listing.TITLE}
-                      onChange={(e) => handleCellUpdate(listing.id, 'TITLE', e.target.value)}
-                      onBlur={() => setEditingCell(null)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setEditingCell(null);
-                        }
-                      }}
-                      maxLength={150}
-                      className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      autoComplete="off"
-                      autoFocus
-                    />
+                    <div>
+                      <input
+                        type="text"
+                        list="title-suggestions"
+                        value={listing.TITLE}
+                        onChange={(e) => handleCellUpdate(listing.id, 'TITLE', e.target.value)}
+                        onBlur={() => setEditingCell(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            setEditingCell(null);
+                          } else if (e.key === 'Escape') {
+                            setEditingCell(null);
+                          }
+                        }}
+                        maxLength={150}
+                        className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
+                        autoFocus
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        {listing.TITLE.length}/150 characters
+                      </div>
+                    </div>
                   ) : (
                     <div className="truncate" title={listing.TITLE}>{listing.TITLE || <span className="text-gray-400">Click to edit</span>}</div>
                   )}
@@ -280,6 +291,8 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                       onBlur={() => setEditingCell(null)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
+                          setEditingCell(null);
+                        } else if (e.key === 'Escape') {
                           setEditingCell(null);
                         }
                       }}
@@ -337,6 +350,8 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
                             setEditingCell(null);
+                          } else if (e.key === 'Escape') {
+                            setEditingCell(null);
                           }
                         }}
                         maxLength={5000}
@@ -375,6 +390,8 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                       onBlur={() => setEditingCell(null)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
+                          setEditingCell(null);
+                        } else if (e.key === 'Escape') {
                           setEditingCell(null);
                         }
                       }}
