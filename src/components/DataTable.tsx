@@ -812,14 +812,20 @@ ${JSON.stringify(data.map(item => item.PRICE), null, 2)}
 FILTERED PRICES (after String conversion and trim):
 ${JSON.stringify(data.map(item => String(item.PRICE)).filter(price => price && price.trim() !== ''), null, 2)}
 
-UNIQUE PRICES:
+UNIQUE PRICES (should appear in dropdown):
 ${JSON.stringify(uniquePrices, null, 2)}
 
 UNIQUE CATEGORIES:
 ${JSON.stringify(uniqueCategories, null, 2)}
 
+DATALIST OPTIONS BEING RENDERED:
+${uniquePrices.map((price, index) => `<option key="${index}" value="${price}" />`).join('\n')}
+
 DATA SAMPLE (first 3 items):
 ${JSON.stringify(data.slice(0, 3).map(item => ({ id: item.id, PRICE: item.PRICE, CATEGORY: item.CATEGORY, priceType: typeof item.PRICE })), null, 2)}
+
+BROWSER NOTE: Some browsers (Chrome, Edge) only show a subset of datalist options initially.
+Try typing a number to filter the suggestions (e.g., type "2" to see "22", type "4" to see "44").
 `}
               className="w-full h-96 p-2 font-mono text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border dark:border-gray-600 rounded"
             />
