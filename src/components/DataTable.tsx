@@ -58,8 +58,11 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   ).sort((a, b) => Number(a) - Number(b));
 
   // Debug logging
-  console.log('DataTable render - data:', data.map(item => ({ id: item.id, PRICE: item.PRICE, type: typeof item.PRICE })));
+  console.log('DataTable render - data:', data.map(item => ({ id: item.id, PRICE: item.PRICE, CATEGORY: item.CATEGORY, priceType: typeof item.PRICE })));
+  console.log('DataTable render - ALL PRICES:', data.map(item => item.PRICE));
+  console.log('DataTable render - FILTERED PRICES:', data.map(item => item.PRICE).filter(price => price !== null && price !== undefined && price !== ''));
   console.log('DataTable render - uniquePrices:', uniquePrices);
+  console.log('DataTable render - uniqueCategories:', uniqueCategories);
 
   // Handle column resizing with mouse events
   useEffect(() => {
