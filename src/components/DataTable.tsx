@@ -806,36 +806,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
         ))}
       </datalist>
 
-      {/* Custom Price Dropdown */}
-      {showPriceDropdown && priceDropdownPosition && uniquePrices.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: `${priceDropdownPosition.top}px`,
-            left: `${priceDropdownPosition.left}px`,
-            width: `${priceDropdownPosition.width}px`,
-            zIndex: 1000
-          }}
-          className="bg-white dark:bg-gray-800 border dark:border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto"
-        >
-          {uniquePrices.map((price, index) => (
-            <div
-              key={index}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                if (editingCell) {
-                  handleCellUpdate(editingCell.id, 'PRICE', price);
-                  setShowPriceDropdown(false);
-                  setEditingCell(null);
-                }
-              }}
-              className="px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 text-gray-900 dark:text-gray-100"
-            >
-              {price}
-            </div>
-          ))}
-        </div>
-      )}
+
 
       {/* Debug Panel */}
       <div className="mt-4 border-t dark:border-gray-700 pt-4">
@@ -870,14 +841,48 @@ ${uniquePrices.map((price, index) => `<option key="${index}" value="${price}" />
 DATA SAMPLE (first 3 items):
 ${JSON.stringify(data.slice(0, 3).map(item => ({ id: item.id, PRICE: item.PRICE, CATEGORY: item.CATEGORY, priceType: typeof item.PRICE })), null, 2)}
 
-BROWSER NOTE: Some browsers (Chrome, Edge) only show a subset of datalist options initially.
-Try typing a number to filter the suggestions (e.g., type "2" to see "22", type "4" to see "44").
+CUSTOM DROPDOWN STATE:
+showPriceDropdown: ${showPriceDropdown}
+priceDropdownPosition: ${JSON.stringify(priceDropdownPosition, null, 2)}
+uniquePrices.length: ${uniquePrices.length}
+Should show dropdown: ${showPriceDropdown && priceDropdownPosition && uniquePrices.length > 0}
 `}
               className="w-full h-96 p-2 font-mono text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border dark:border-gray-600 rounded"
             />
           </div>
         )}
       </div>
+
+      {/* Custom Price Dropdown - Positioned absolutely outside table */}
+      {showPriceDropdown && priceDropdownPosition && uniquePrices.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            top: `${priceDropdownPosition.top}px`,
+            left: `${priceDropdownPosition.left}px`,
+            width: `${priceDropdownPosition.width}px`,
+            zIndex: 9999
+          }}
+          className="bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-400 rounded shadow-2xl max-h-48 overflow-y-auto"
+        >
+          {uniquePrices.map((price, index) => (
+            <div
+              key={index}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                if (editingCell) {
+                  handleCellUpdate(editingCell.id, 'PRICE', price);
+                  setShowPriceDropdown(false);
+                  setEditingCell(null);
+                }
+              }}
+              className="px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 last:border-b-0"
+            >
+              {price}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
