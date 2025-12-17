@@ -167,54 +167,49 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
               ].map(({ field, label }) => (
                 <th
                   key={field}
-                  className="px-4 py-2 border-b text-left font-medium text-gray-700 relative select-none group"
-                  style={{ position: 'relative' }}
+                  className="border-b text-left font-medium text-gray-700 select-none"
+                  style={{ position: 'relative', padding: 0 }}
                 >
-                  <div
-                    className="flex items-center gap-2 cursor-pointer hover:text-blue-600 pr-2"
-                    onClick={() => handleSort(field)}
-                  >
-                    <span>{label}</span>
-                    {sortField === field ? (
-                      sortDirection === 'asc' ? (
-                        <ArrowUp size={14} className="text-blue-600" />
+                  <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                    {/* Sortable header content */}
+                    <div
+                      className="flex items-center gap-2 cursor-pointer hover:text-blue-600 px-4 py-2"
+                      style={{ flex: 1 }}
+                      onClick={() => handleSort(field)}
+                    >
+                      <span>{label}</span>
+                      {sortField === field ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp size={14} className="text-blue-600" />
+                        ) : (
+                          <ArrowDown size={14} className="text-blue-600" />
+                        )
                       ) : (
-                        <ArrowDown size={14} className="text-blue-600" />
-                      )
-                    ) : (
-                      <ArrowUpDown size={14} className="text-gray-400" />
-                    )}
+                        <ArrowUpDown size={14} className="text-gray-400" />
+                      )}
+                    </div>
+                    {/* Resize handle - separate from sort area */}
+                    <div
+                      className="cursor-col-resize hover:bg-blue-300"
+                      style={{
+                        width: '16px',
+                        background: resizing?.column === field ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)',
+                        borderLeft: '2px solid #3b82f6',
+                        flexShrink: 0,
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🎯 Resize handle mousedown', field);
+                        setResizing({
+                          column: field,
+                          startX: e.clientX,
+                          startWidth: columnWidths[field],
+                        });
+                      }}
+                      title="Drag to resize column"
+                    />
                   </div>
-                  {/* Resize handle */}
-                  <div
-                    className="absolute top-0 h-full cursor-col-resize"
-                    style={{
-                      right: '-4px',
-                      width: '8px',
-                      zIndex: 30,
-                      borderRight: resizing?.column === field ? '2px solid #3b82f6' : '2px solid transparent',
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('Resize handle mousedown', field);
-                      setResizing({
-                        column: field,
-                        startX: e.clientX,
-                        startWidth: columnWidths[field],
-                      });
-                    }}
-                    onMouseEnter={(e) => {
-                      const target = e.currentTarget as HTMLElement;
-                      target.style.borderRight = '2px solid #3b82f6';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (resizing?.column !== field) {
-                        const target = e.currentTarget as HTMLElement;
-                        target.style.borderRight = '2px solid transparent';
-                      }
-                    }}
-                  />
                 </th>
               ))}
               <th className="px-4 py-2 border-b text-left font-medium text-gray-700">
