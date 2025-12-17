@@ -27,6 +27,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
     'OFFER SHIPPING': true,
   });
   const [showColumnMenu, setShowColumnMenu] = useState(false);
+  const [focusedCell, setFocusedCell] = useState<{ id: string; field: keyof MarketplaceListing } | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({
     TITLE: 250,
     PRICE: 100,
@@ -192,6 +193,60 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
     const comparison = aVal < bVal ? -1 : 1;
     return sortDirection === 'asc' ? comparison : -comparison;
   });
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle keyboard navigation when not editing
+      if (editingCell || !focusedCell || data.length === 0) return;
+
+      const visibleFields = Object.keys(visibleColumns).filter(
+        (field) => visibleColumns[field as keyof MarketplaceListing]
+      ) as (keyof MarketplaceListing)[];
+
+      const currentRowIndex = sortedData.findIndex((item) => item.id === focusedCell.id);
+      const currentColIndex = visibleFields.indexOf(focusedCell.field);
+
+      let newRowIndex = currentRowIndex;
+      let newColIndex = currentColIndex;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          newRowIndex = Math.max(0, currentRowIndex - 1);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          newRowIndex = Math.min(sortedData.length - 1, currentRowIndex + 1);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          newColIndex = Math.max(0, currentColIndex - 1);
+          break;
+        case 'ArrowRight':
+        case 'Tab':
+          e.preventDefault();
+          newColIndex = Math.min(visibleFields.length - 1, currentColIndex + 1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          setEditingCell(focusedCell);
+          return;
+        default:
+          return;
+      }
+
+      const newRow = sortedData[newRowIndex];
+      const newField = visibleFields[newColIndex];
+
+      if (newRow && newField) {
+        setFocusedCell({ id: newRow.id, field: newField });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [editingCell, focusedCell, data, visibleColumns, sortedData]);
 
   return (
     <div className="overflow-x-auto">
@@ -360,8 +415,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
               <tr key={listing.id} className="hover:bg-blue-50 dark:hover:bg-gray-700 hover:shadow-sm transition-colors">
                 {/* Title */}
                 {visibleColumns.TITLE && <td
-                  className="px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100"
-                  onClick={() => setEditingCell({ id: listing.id, field: 'TITLE' })}
+                  className={`px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100 ${
+                    focusedCell?.id === listing.id && focusedCell?.field === 'TITLE' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  }`}
+                  onClick={() => {
+                    setFocusedCell({ id: listing.id, field: 'TITLE' });
+                    setEditingCell({ id: listing.id, field: 'TITLE' });
+                  }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'TITLE' ? (
                     <div>
@@ -394,8 +454,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
                 {/* Price */}
                 {visibleColumns.PRICE && <td
-                  className="px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100"
-                  onClick={() => setEditingCell({ id: listing.id, field: 'PRICE' })}
+                  className={`px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100 ${
+                    focusedCell?.id === listing.id && focusedCell?.field === 'PRICE' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  }`}
+                  onClick={() => {
+                    setFocusedCell({ id: listing.id, field: 'PRICE' });
+                    setEditingCell({ id: listing.id, field: 'PRICE' });
+                  }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'PRICE' ? (
                     <input
@@ -420,8 +485,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
                 {/* Condition */}
                 {visibleColumns.CONDITION && <td
-                  className="px-4 py-2 border-b dark:border-gray-700 cursor-pointer text-gray-900 dark:text-gray-100"
-                  onClick={() => setEditingCell({ id: listing.id, field: 'CONDITION' })}
+                  className={`px-4 py-2 border-b dark:border-gray-700 cursor-pointer text-gray-900 dark:text-gray-100 ${
+                    focusedCell?.id === listing.id && focusedCell?.field === 'CONDITION' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  }`}
+                  onClick={() => {
+                    setFocusedCell({ id: listing.id, field: 'CONDITION' });
+                    setEditingCell({ id: listing.id, field: 'CONDITION' });
+                  }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'CONDITION' ? (
                     <select
@@ -445,8 +515,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
                 {/* Description */}
                 {visibleColumns.DESCRIPTION && <td
-                  className="px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100"
-                  onClick={() => setEditingCell({ id: listing.id, field: 'DESCRIPTION' })}
+                  className={`px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100 ${
+                    focusedCell?.id === listing.id && focusedCell?.field === 'DESCRIPTION' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  }`}
+                  onClick={() => {
+                    setFocusedCell({ id: listing.id, field: 'DESCRIPTION' });
+                    setEditingCell({ id: listing.id, field: 'DESCRIPTION' });
+                  }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'DESCRIPTION' ? (
                     <>
@@ -492,8 +567,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
                 {/* Category */}
                 {visibleColumns.CATEGORY && <td
-                  className="px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100"
-                  onClick={() => setEditingCell({ id: listing.id, field: 'CATEGORY' })}
+                  className={`px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100 ${
+                    focusedCell?.id === listing.id && focusedCell?.field === 'CATEGORY' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  }`}
+                  onClick={() => {
+                    setFocusedCell({ id: listing.id, field: 'CATEGORY' });
+                    setEditingCell({ id: listing.id, field: 'CATEGORY' });
+                  }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'CATEGORY' ? (
                     <input
@@ -521,8 +601,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
                 {/* Offer Shipping */}
                 {visibleColumns['OFFER SHIPPING'] && <td
-                  className="px-4 py-2 border-b dark:border-gray-700 cursor-pointer text-gray-900 dark:text-gray-100"
-                  onClick={() => setEditingCell({ id: listing.id, field: 'OFFER SHIPPING' })}
+                  className={`px-4 py-2 border-b dark:border-gray-700 cursor-pointer text-gray-900 dark:text-gray-100 ${
+                    focusedCell?.id === listing.id && focusedCell?.field === 'OFFER SHIPPING' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  }`}
+                  onClick={() => {
+                    setFocusedCell({ id: listing.id, field: 'OFFER SHIPPING' });
+                    setEditingCell({ id: listing.id, field: 'OFFER SHIPPING' });
+                  }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'OFFER SHIPPING' ? (
                     <select
