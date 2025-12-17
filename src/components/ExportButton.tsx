@@ -2,19 +2,38 @@ import { Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { MarketplaceListing } from '../types';
 
+type SortField = keyof MarketplaceListing | null;
+type SortDirection = 'asc' | 'desc' | null;
+
 interface ExportButtonProps {
   data: MarketplaceListing[];
+  sortField: SortField;
+  sortDirection: SortDirection;
 }
 
-export function ExportButton({ data }: ExportButtonProps) {
+export function ExportButton({ data, sortField, sortDirection }: ExportButtonProps) {
   const handleExport = () => {
     if (data.length === 0) {
       alert('No data to export');
       return;
     }
 
+    // Sort data if a sort is active
+    let sortedData = [...data];
+    if (sortField && sortDirection) {
+      sortedData.sort((a, b) => {
+        const aVal = a[sortField];
+        const bVal = b[sortField];
+
+        if (aVal === bVal) return 0;
+
+        const comparison = aVal < bVal ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
     // Prepare data for export (remove id field)
-    const exportData = data.map(({ id, ...rest }) => rest);
+    const exportData = sortedData.map(({ id, ...rest }) => rest);
 
     // Create workbook and worksheet
     const worksheet = XLSX.utils.json_to_sheet(exportData);

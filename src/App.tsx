@@ -5,8 +5,13 @@ import { ExportButton } from './components/ExportButton';
 import type { MarketplaceListing } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
 
+type SortField = keyof MarketplaceListing | null;
+type SortDirection = 'asc' | 'desc' | null;
+
 function App() {
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const handleDataLoaded = (newData: MarketplaceListing[]) => {
     // Merge with existing data
@@ -42,7 +47,7 @@ function App() {
                 <Trash2 size={16} />
                 Clear All
               </button>
-              <ExportButton data={listings} />
+              <ExportButton data={listings} sortField={sortField} sortDirection={sortDirection} />
             </div>
           )}
         </div>
@@ -68,7 +73,16 @@ function App() {
 
               <div className="bg-white rounded-lg shadow border border-gray-200">
                 <div className="p-6">
-                  <DataTable data={listings} onUpdate={setListings} />
+                  <DataTable
+                    data={listings}
+                    onUpdate={setListings}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSortChange={(field, direction) => {
+                      setSortField(field);
+                      setSortDirection(direction);
+                    }}
+                  />
                 </div>
               </div>
             </div>

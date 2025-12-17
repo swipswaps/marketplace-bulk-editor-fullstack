@@ -3,18 +3,19 @@ import { Trash2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { MarketplaceListing } from '../types';
 import { CONDITIONS } from '../types';
 
-interface DataTableProps {
-  data: MarketplaceListing[];
-  onUpdate: (data: MarketplaceListing[]) => void;
-}
-
 type SortField = keyof MarketplaceListing | null;
 type SortDirection = 'asc' | 'desc' | null;
 
-export function DataTable({ data, onUpdate }: DataTableProps) {
+interface DataTableProps {
+  data: MarketplaceListing[];
+  onUpdate: (data: MarketplaceListing[]) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSortChange: (field: SortField, direction: SortDirection) => void;
+}
+
+export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChange }: DataTableProps) {
   const [editingCell, setEditingCell] = useState<{ id: string; field: keyof MarketplaceListing } | null>(null);
-  const [sortField, setSortField] = useState<SortField>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({
     TITLE: 250,
     PRICE: 100,
@@ -90,14 +91,12 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
     if (sortField === field) {
       // Cycle through: asc -> desc -> null
       if (sortDirection === 'asc') {
-        setSortDirection('desc');
+        onSortChange(field, 'desc');
       } else if (sortDirection === 'desc') {
-        setSortField(null);
-        setSortDirection(null);
+        onSortChange(null, null);
       }
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      onSortChange(field, 'asc');
     }
   };
 
