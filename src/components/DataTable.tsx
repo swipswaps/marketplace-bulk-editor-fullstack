@@ -603,6 +603,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                         }
                       }}
                       className="w-full px-2 py-1 border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      autoComplete="off"
                       autoFocus
                     />
                   ) : (
