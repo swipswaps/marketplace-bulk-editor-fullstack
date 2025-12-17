@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, Plus, ArrowUpDown, ArrowUp, ArrowDown, Copy } from 'lucide-react';
+import { Trash2, Plus, ArrowUpDown, ArrowUp, ArrowDown, Copy, Eye, EyeOff } from 'lucide-react';
 import type { MarketplaceListing } from '../types';
 import { CONDITIONS } from '../types';
 
@@ -17,6 +17,16 @@ interface DataTableProps {
 export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChange }: DataTableProps) {
   const [editingCell, setEditingCell] = useState<{ id: string; field: keyof MarketplaceListing } | null>(null);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [visibleColumns, setVisibleColumns] = useState<Record<keyof MarketplaceListing, boolean>>({
+    TITLE: true,
+    PRICE: true,
+    CONDITION: true,
+    DESCRIPTION: true,
+    CATEGORY: true,
+    'OFFER SHIPPING': true,
+  });
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({
     TITLE: 250,
     PRICE: 100,
@@ -155,7 +165,23 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   };
 
   // Sort data
-  const sortedData = [...data].sort((a, b) => {
+  // Filter data based on search query
+  const filteredData = data.filter((listing) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+    return (
+      listing.TITLE.toLowerCase().includes(query) ||
+      listing.DESCRIPTION.toLowerCase().includes(query) ||
+      listing.CATEGORY.toLowerCase().includes(query) ||
+      listing.CONDITION.toLowerCase().includes(query) ||
+      String(listing.PRICE).includes(query) ||
+      listing['OFFER SHIPPING'].toLowerCase().includes(query)
+    );
+  });
+
+  // Sort filtered data
+  const sortedData = [...filteredData].sort((a, b) => {
     if (!sortField || !sortDirection) return 0;
 
     const aVal = a[sortField];
@@ -169,14 +195,72 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
   return (
     <div className="overflow-x-auto">
-      <div className="mb-4 flex items-center justify-between">
-        <button
-          onClick={handleAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          <Plus size={16} />
-          Add New Listing
-        </button>
+      {/* Search and Actions Bar */}
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <button
+            onClick={handleAdd}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus size={16} />
+            Add New Listing
+          </button>
+
+          {/* Search box */}
+          <div className="flex-1 max-w-md">
+            <input
+              type="text"
+              placeholder="Search listings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          {/* Column visibility toggle */}
+          <div className="relative">
+            <button
+              onClick={() => setShowColumnMenu(!showColumnMenu)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              <Eye size={16} />
+              Columns
+            </button>
+
+            {showColumnMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+                <div className="p-2">
+                  {Object.keys(visibleColumns).map((col) => {
+                    const column = col as keyof MarketplaceListing;
+                    return (
+                      <label key={column} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns[column]}
+                          onChange={(e) => {
+                            setVisibleColumns(prev => ({
+                              ...prev,
+                              [column]: e.target.checked
+                            }));
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{column}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Results count */}
+          {searchQuery && (
+            <div className="text-sm text-gray-600">
+              {filteredData.length} of {data.length} listings
+            </div>
+          )}
+        </div>
 
         {/* Auto-save indicator */}
         {lastSaved && (
@@ -199,7 +283,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
               { field: 'DESCRIPTION' as keyof MarketplaceListing },
               { field: 'CATEGORY' as keyof MarketplaceListing },
               { field: 'OFFER SHIPPING' as keyof MarketplaceListing },
-            ].map(({ field }) => (
+            ].filter(({ field }) => visibleColumns[field]).map(({ field }) => (
               <col key={field} style={{ width: `${columnWidths[field]}px` }} />
             ))}
             <col style={{ width: '100px' }} />
@@ -213,7 +297,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                 { field: 'DESCRIPTION' as keyof MarketplaceListing, label: 'Description' },
                 { field: 'CATEGORY' as keyof MarketplaceListing, label: 'Category' },
                 { field: 'OFFER SHIPPING' as keyof MarketplaceListing, label: 'Shipping' },
-              ].map(({ field, label }, colIndex) => (
+              ].filter(({ field }) => visibleColumns[field]).map(({ field, label }, colIndex) => (
                 <th
                   key={field}
                   className={`border-b text-left font-medium select-none ${
@@ -275,7 +359,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
             {sortedData.map((listing) => (
               <tr key={listing.id} className="hover:bg-blue-50 hover:shadow-sm transition-colors">
                 {/* Title */}
-                <td
+                {visibleColumns.TITLE && <td
                   className="px-4 py-2 border-b cursor-text"
                   onClick={() => setEditingCell({ id: listing.id, field: 'TITLE' })}
                 >
@@ -306,10 +390,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   ) : (
                     <div className="truncate" title={listing.TITLE}>{listing.TITLE || <span className="text-gray-400">Click to edit</span>}</div>
                   )}
-                </td>
+                </td>}
 
                 {/* Price */}
-                <td
+                {visibleColumns.PRICE && <td
                   className="px-4 py-2 border-b cursor-text"
                   onClick={() => setEditingCell({ id: listing.id, field: 'PRICE' })}
                 >
@@ -332,10 +416,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   ) : (
                     <div>${typeof listing.PRICE === 'number' ? listing.PRICE.toFixed(2) : listing.PRICE}</div>
                   )}
-                </td>
+                </td>}
 
                 {/* Condition */}
-                <td
+                {visibleColumns.CONDITION && <td
                   className="px-4 py-2 border-b cursor-pointer"
                   onClick={() => setEditingCell({ id: listing.id, field: 'CONDITION' })}
                 >
@@ -357,10 +441,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   ) : (
                     <div>{listing.CONDITION}</div>
                   )}
-                </td>
+                </td>}
 
                 {/* Description */}
-                <td
+                {visibleColumns.DESCRIPTION && <td
                   className="px-4 py-2 border-b cursor-text"
                   onClick={() => setEditingCell({ id: listing.id, field: 'DESCRIPTION' })}
                 >
@@ -404,10 +488,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   ) : (
                     <div className="whitespace-pre-wrap" title={listing.DESCRIPTION}>{listing.DESCRIPTION || <span className="text-gray-400">Click to edit</span>}</div>
                   )}
-                </td>
+                </td>}
 
                 {/* Category */}
-                <td
+                {visibleColumns.CATEGORY && <td
                   className="px-4 py-2 border-b cursor-text"
                   onClick={() => setEditingCell({ id: listing.id, field: 'CATEGORY' })}
                 >
@@ -433,10 +517,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   ) : (
                     <div className="truncate" title={listing.CATEGORY}>{listing.CATEGORY || <span className="text-gray-400">Click to edit</span>}</div>
                   )}
-                </td>
+                </td>}
 
                 {/* Offer Shipping */}
-                <td
+                {visibleColumns['OFFER SHIPPING'] && <td
                   className="px-4 py-2 border-b cursor-pointer"
                   onClick={() => setEditingCell({ id: listing.id, field: 'OFFER SHIPPING' })}
                 >
@@ -457,7 +541,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   ) : (
                     <div>{listing['OFFER SHIPPING']}</div>
                   )}
-                </td>
+                </td>}
 
                 {/* Actions */}
                 <td className="px-4 py-2 border-b">

@@ -1,4 +1,5 @@
-import { Download } from 'lucide-react';
+import { useState } from 'react';
+import { Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { MarketplaceListing } from '../types';
 
@@ -12,12 +13,9 @@ interface ExportButtonProps {
 }
 
 export function ExportButton({ data, sortField, sortDirection }: ExportButtonProps) {
-  const handleExport = () => {
-    if (data.length === 0) {
-      alert('No data to export');
-      return;
-    }
+  const [showPreview, setShowPreview] = useState(false);
 
+  const getSortedData = () => {
     // Sort data if a sort is active
     let sortedData = [...data];
     if (sortField && sortDirection) {
@@ -31,6 +29,16 @@ export function ExportButton({ data, sortField, sortDirection }: ExportButtonPro
         return sortDirection === 'asc' ? -comparison : comparison; // Inverted to match table display
       });
     }
+    return sortedData;
+  };
+
+  const handleExport = () => {
+    if (data.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    const sortedData = getSortedData();
 
     // Prepare data for export (remove id field)
     const exportData = sortedData.map(({ id, ...rest }) => rest);
@@ -60,14 +68,87 @@ export function ExportButton({ data, sortField, sortDirection }: ExportButtonPro
   };
 
   return (
-    <button
-      onClick={handleExport}
-      disabled={data.length === 0}
-      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
-    >
-      <Download size={16} />
-      Export for FB
-    </button>
+    <>
+      <button
+        onClick={() => setShowPreview(true)}
+        disabled={data.length === 0}
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+      >
+        <Download size={16} />
+        Export for FB
+      </button>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Export Preview</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Showing first 10 of {data.length} listings • {sortField ? `Sorted by ${sortField} (${sortDirection})` : 'Original order'}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Preview Table */}
+            <div className="flex-1 overflow-auto p-6">
+              <table className="w-full border border-gray-300 text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="border px-3 py-2 text-left font-medium">TITLE</th>
+                    <th className="border px-3 py-2 text-left font-medium">PRICE</th>
+                    <th className="border px-3 py-2 text-left font-medium">CONDITION</th>
+                    <th className="border px-3 py-2 text-left font-medium">DESCRIPTION</th>
+                    <th className="border px-3 py-2 text-left font-medium">CATEGORY</th>
+                    <th className="border px-3 py-2 text-left font-medium">OFFER SHIPPING</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getSortedData().slice(0, 10).map((listing, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="border px-3 py-2">{listing.TITLE}</td>
+                      <td className="border px-3 py-2">${listing.PRICE}</td>
+                      <td className="border px-3 py-2">{listing.CONDITION}</td>
+                      <td className="border px-3 py-2 max-w-xs truncate">{listing.DESCRIPTION}</td>
+                      <td className="border px-3 py-2">{listing.CATEGORY}</td>
+                      <td className="border px-3 py-2">{listing['OFFER SHIPPING']}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleExport();
+                  setShowPreview(false);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Download size={16} />
+                Confirm Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
