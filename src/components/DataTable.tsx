@@ -54,8 +54,12 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   ).sort();
 
   const uniquePrices = Array.from(
-    new Set(data.map(item => item.PRICE).filter(price => price && price > 0))
+    new Set(data.map(item => item.PRICE).filter(price => price && Number(price) > 0))
   ).sort((a, b) => Number(a) - Number(b));
+
+  // Debug logging
+  console.log('DataTable render - data:', data.map(item => ({ id: item.id, PRICE: item.PRICE, type: typeof item.PRICE })));
+  console.log('DataTable render - uniquePrices:', uniquePrices);
 
   // Handle column resizing with mouse events
   useEffect(() => {
