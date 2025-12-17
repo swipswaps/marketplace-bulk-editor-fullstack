@@ -30,20 +30,26 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
     new Set(data.map(item => item.CATEGORY).filter(cat => cat && cat.trim() !== ''))
   ).sort();
 
-  // Handle column resizing
+  // Handle column resizing with mouse events
   useEffect(() => {
     if (!resizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (resizing) {
-        e.preventDefault();
-        const delta = e.clientX - resizing.startX;
-        const newWidth = Math.max(80, resizing.startWidth + delta);
-        setColumnWidths(prev => ({ ...prev, [resizing.column]: newWidth }));
-      }
+      e.preventDefault();
+      e.stopPropagation();
+
+      const delta = e.clientX - resizing.startX;
+      const newWidth = Math.max(80, resizing.startWidth + delta);
+
+      setColumnWidths(prev => ({
+        ...prev,
+        [resizing.column]: newWidth
+      }));
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
       setResizing(null);
     };
 
@@ -51,12 +57,13 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'col-resize';
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // Add listeners to document for better drag tracking
+    document.addEventListener('mousemove', handleMouseMove, true);
+    document.addEventListener('mouseup', handleMouseUp, true);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove, true);
+      document.removeEventListener('mouseup', handleMouseUp, true);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
