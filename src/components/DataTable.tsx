@@ -18,6 +18,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   const [editingCell, setEditingCell] = useState<{ id: string; field: keyof MarketplaceListing } | null>(null);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Record<keyof MarketplaceListing, boolean>>({
     TITLE: true,
     PRICE: true,
@@ -57,12 +58,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
     new Set(data.map(item => String(item.PRICE)).filter(price => price && price.trim() !== ''))
   ).sort((a, b) => Number(a) - Number(b));
 
-  // Debug logging
-  console.log('DataTable render - data:', data.map(item => ({ id: item.id, PRICE: item.PRICE, CATEGORY: item.CATEGORY, priceType: typeof item.PRICE })));
-  console.log('DataTable render - ALL PRICES:', data.map(item => item.PRICE));
-  console.log('DataTable render - FILTERED PRICES:', data.map(item => item.PRICE).filter(price => price !== null && price !== undefined && price !== ''));
-  console.log('DataTable render - uniquePrices:', uniquePrices);
-  console.log('DataTable render - uniqueCategories:', uniqueCategories);
+
 
   // Handle column resizing with mouse events
   useEffect(() => {
@@ -794,6 +790,42 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
           <option key={index} value={price} />
         ))}
       </datalist>
+
+      {/* Debug Panel */}
+      <div className="mt-4 border-t dark:border-gray-700 pt-4">
+        <button
+          onClick={() => setShowDebugPanel(!showDebugPanel)}
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+        >
+          {showDebugPanel ? '▼' : '▶'} Debug Logs
+        </button>
+
+        {showDebugPanel && (
+          <div className="mt-2 p-4 bg-gray-100 dark:bg-gray-800 rounded">
+            <textarea
+              readOnly
+              value={`=== DEBUG LOGS ===
+
+ALL PRICES:
+${JSON.stringify(data.map(item => item.PRICE), null, 2)}
+
+FILTERED PRICES (after String conversion and trim):
+${JSON.stringify(data.map(item => String(item.PRICE)).filter(price => price && price.trim() !== ''), null, 2)}
+
+UNIQUE PRICES:
+${JSON.stringify(uniquePrices, null, 2)}
+
+UNIQUE CATEGORIES:
+${JSON.stringify(uniqueCategories, null, 2)}
+
+DATA SAMPLE (first 3 items):
+${JSON.stringify(data.slice(0, 3).map(item => ({ id: item.id, PRICE: item.PRICE, CATEGORY: item.CATEGORY, priceType: typeof item.PRICE })), null, 2)}
+`}
+              className="w-full h-96 p-2 font-mono text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border dark:border-gray-600 rounded"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
