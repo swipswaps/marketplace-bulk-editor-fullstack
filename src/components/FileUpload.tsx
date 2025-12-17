@@ -12,7 +12,7 @@ export function FileUpload({ onDataLoaded }: FileUploadProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach((file) => {
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
@@ -20,25 +20,55 @@ export function FileUpload({ onDataLoaded }: FileUploadProps) {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
-          
+
+          // Validation warnings
+          const warnings: string[] = [];
+          let emptyTitles = 0;
+          let invalidPrices = 0;
+          let emptyDescriptions = 0;
+
           // Transform data to MarketplaceListing format
-          const listings: MarketplaceListing[] = jsonData.map((row) => ({
-            id: crypto.randomUUID(),
-            TITLE: row.TITLE || '',
-            PRICE: row.PRICE || 0,
-            CONDITION: row.CONDITION || 'New',
-            DESCRIPTION: row.DESCRIPTION || '',
-            CATEGORY: row.CATEGORY || 'Electronics',
-            'OFFER SHIPPING': row['OFFER SHIPPING'] || 'No'
-          }));
-          
+          const listings: MarketplaceListing[] = jsonData.map((row, index) => {
+            // Check for validation issues
+            if (!row.TITLE || row.TITLE.trim() === '') {
+              emptyTitles++;
+            }
+            if (!row.PRICE || isNaN(Number(row.PRICE)) || Number(row.PRICE) <= 0) {
+              invalidPrices++;
+            }
+            if (!row.DESCRIPTION || row.DESCRIPTION.trim() === '') {
+              emptyDescriptions++;
+            }
+
+            return {
+              id: crypto.randomUUID(),
+              TITLE: row.TITLE || '',
+              PRICE: row.PRICE || 0,
+              CONDITION: row.CONDITION || 'New',
+              DESCRIPTION: row.DESCRIPTION || '',
+              CATEGORY: row.CATEGORY || 'Electronics',
+              'OFFER SHIPPING': row['OFFER SHIPPING'] || 'No'
+            };
+          });
+
+          // Build warning message
+          if (emptyTitles > 0) warnings.push(`${emptyTitles} listing(s) with empty titles`);
+          if (invalidPrices > 0) warnings.push(`${invalidPrices} listing(s) with invalid prices`);
+          if (emptyDescriptions > 0) warnings.push(`${emptyDescriptions} listing(s) with empty descriptions`);
+
+          // Show warnings if any
+          if (warnings.length > 0) {
+            const warningMsg = `⚠️ Import completed with warnings:\n\n${warnings.join('\n')}\n\nPlease review and fix these issues before exporting.`;
+            alert(warningMsg);
+          }
+
           onDataLoaded(listings);
         } catch (error) {
           console.error('Error parsing file:', error);
           alert('Error parsing file. Please make sure it\'s a valid Excel file.');
         }
       };
-      
+
       reader.readAsBinaryString(file);
     });
   }, [onDataLoaded]);

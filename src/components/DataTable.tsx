@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Plus, ArrowUpDown, ArrowUp, ArrowDown, Copy } from 'lucide-react';
 import type { MarketplaceListing } from '../types';
 import { CONDITIONS } from '../types';
 
@@ -16,6 +16,7 @@ interface DataTableProps {
 
 export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChange }: DataTableProps) {
   const [editingCell, setEditingCell] = useState<{ id: string; field: keyof MarketplaceListing } | null>(null);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({
     TITLE: 250,
     PRICE: 100,
@@ -113,11 +114,30 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
       item.id === id ? { ...item, [field]: value } : item
     );
     onUpdate(updatedData);
+
+    // Show save indicator
+    setLastSaved(new Date().toLocaleTimeString());
+    setTimeout(() => setLastSaved(null), 2000); // Hide after 2 seconds
   };
 
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this listing?')) {
       onUpdate(data.filter(item => item.id !== id));
+    }
+  };
+
+  const handleDuplicate = (id: string) => {
+    const listingToDuplicate = data.find(item => item.id === id);
+    if (listingToDuplicate) {
+      const duplicatedListing: MarketplaceListing = {
+        ...listingToDuplicate,
+        id: crypto.randomUUID(),
+      };
+      onUpdate([...data, duplicatedListing]);
+
+      // Show save indicator
+      setLastSaved(new Date().toLocaleTimeString());
+      setTimeout(() => setLastSaved(null), 2000);
     }
   };
 
@@ -149,7 +169,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
   return (
     <div className="overflow-x-auto">
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <button
           onClick={handleAdd}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
@@ -157,6 +177,16 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
           <Plus size={16} />
           Add New Listing
         </button>
+
+        {/* Auto-save indicator */}
+        {lastSaved && (
+          <div className="flex items-center gap-2 text-sm text-green-600 animate-fade-in">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Saved at {lastSaved}</span>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -431,13 +461,22 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
                 {/* Actions */}
                 <td className="px-4 py-2 border-b">
-                  <button
-                    onClick={() => handleDelete(listing.id)}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded"
-                    title="Delete"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDuplicate(listing.id)}
+                      className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      title="Duplicate"
+                    >
+                      <Copy size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(listing.id)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      title="Delete"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
