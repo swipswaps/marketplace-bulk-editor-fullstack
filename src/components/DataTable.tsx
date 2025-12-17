@@ -129,7 +129,20 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-300 text-sm" style={{ tableLayout: 'fixed' }}>
+        <table className="bg-white border border-gray-300 text-sm">
+          <colgroup>
+            {[
+              { field: 'TITLE' as keyof MarketplaceListing },
+              { field: 'PRICE' as keyof MarketplaceListing },
+              { field: 'CONDITION' as keyof MarketplaceListing },
+              { field: 'DESCRIPTION' as keyof MarketplaceListing },
+              { field: 'CATEGORY' as keyof MarketplaceListing },
+              { field: 'OFFER SHIPPING' as keyof MarketplaceListing },
+            ].map(({ field }) => (
+              <col key={field} style={{ width: `${columnWidths[field]}px` }} />
+            ))}
+            <col style={{ width: '100px' }} />
+          </colgroup>
           <thead className="bg-gray-100">
             <tr>
               {[
@@ -143,7 +156,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                 <th
                   key={field}
                   className="px-4 py-2 border-b text-left font-medium text-gray-700 relative select-none group"
-                  style={{ width: columnWidths[field], position: 'relative' }}
+                  style={{ position: 'relative' }}
                 >
                   <div
                     className="flex items-center gap-2 cursor-pointer hover:text-blue-600 pr-2"
@@ -189,7 +202,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                   </div>
                 </th>
               ))}
-              <th className="px-4 py-2 border-b text-left font-medium text-gray-700" style={{ width: 100 }}>
+              <th className="px-4 py-2 border-b text-left font-medium text-gray-700">
                 Actions
               </th>
             </tr>
