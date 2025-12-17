@@ -36,6 +36,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
 
     const handleMouseMove = (e: MouseEvent) => {
       if (resizing) {
+        e.preventDefault();
         const delta = e.clientX - resizing.startX;
         const newWidth = Math.max(80, resizing.startWidth + delta);
         setColumnWidths(prev => ({ ...prev, [resizing.column]: newWidth }));
@@ -46,12 +47,18 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
       setResizing(null);
     };
 
+    // Prevent text selection during resize
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
     };
   }, [resizing]);
 
@@ -155,14 +162,27 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                   </div>
                   {/* Resize handle */}
                   <div
-                    className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-400 bg-gray-300"
+                    className="absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-blue-500 transition-colors z-10"
+                    style={{
+                      background: resizing?.column === field ? '#3b82f6' : 'transparent',
+                      borderRight: '2px solid transparent',
+                    }}
                     onMouseDown={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       setResizing({
                         column: field,
                         startX: e.clientX,
                         startWidth: columnWidths[field],
                       });
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLElement).style.borderRight = '2px solid #3b82f6';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (resizing?.column !== field) {
+                        (e.target as HTMLElement).style.borderRight = '2px solid transparent';
+                      }
                     }}
                   />
                 </th>
