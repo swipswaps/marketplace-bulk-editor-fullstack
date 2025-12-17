@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Trash2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { MarketplaceListing } from '../types';
 import { CONDITIONS } from '../types';
@@ -23,7 +23,8 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
     CATEGORY: 180,
     'OFFER SHIPPING': 120,
   });
-  const [resizing, setResizing] = useState<{ column: string; startX: number; startWidth: number } | null>(null);
+  const [resizing, setResizing] = useState<{ column: string; startX: number; startWidth: number; colIndex: number } | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
 
   // Extract unique categories from all listings for autocomplete
   const uniqueCategories = Array.from(
@@ -41,7 +42,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
       e.stopPropagation();
 
       const delta = e.clientX - resizing.startX;
-      const newWidth = Math.max(80, resizing.startWidth + delta);
+      const newWidth = Math.max(100, resizing.startWidth + delta); // Increased minimum from 80 to 100
 
       console.log('Resizing:', { delta, newWidth, clientX: e.clientX, startX: resizing.startX });
 
@@ -49,6 +50,17 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
         ...prev,
         [resizing.column]: newWidth
       }));
+
+      // Also directly update the DOM for immediate visual feedback
+      if (tableRef.current) {
+        const colgroup = tableRef.current.querySelector('colgroup');
+        if (colgroup) {
+          const col = colgroup.children[resizing.colIndex] as HTMLElement;
+          if (col) {
+            col.style.width = `${newWidth}px`;
+          }
+        }
+      }
     };
 
     const handleMouseUp = (e: MouseEvent) => {
@@ -141,7 +153,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="bg-white border border-gray-300 text-sm">
+        <table ref={tableRef} className="bg-white border border-gray-300 text-sm" style={{ tableLayout: 'fixed', width: '100%' }}>
           <colgroup>
             {[
               { field: 'TITLE' as keyof MarketplaceListing },
@@ -164,7 +176,7 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                 { field: 'DESCRIPTION' as keyof MarketplaceListing, label: 'Description' },
                 { field: 'CATEGORY' as keyof MarketplaceListing, label: 'Category' },
                 { field: 'OFFER SHIPPING' as keyof MarketplaceListing, label: 'Shipping' },
-              ].map(({ field, label }) => (
+              ].map(({ field, label }, colIndex) => (
                 <th
                   key={field}
                   className="border-b text-left font-medium text-gray-700 select-none"
@@ -174,18 +186,18 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                     {/* Sortable header content */}
                     <div
                       className="flex items-center gap-2 cursor-pointer hover:text-blue-600 px-4 py-2"
-                      style={{ flex: 1 }}
+                      style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}
                       onClick={() => handleSort(field)}
                     >
-                      <span>{label}</span>
+                      <span className="truncate">{label}</span>
                       {sortField === field ? (
                         sortDirection === 'asc' ? (
-                          <ArrowUp size={14} className="text-blue-600" />
+                          <ArrowUp size={14} className="text-blue-600 flex-shrink-0" />
                         ) : (
-                          <ArrowDown size={14} className="text-blue-600" />
+                          <ArrowDown size={14} className="text-blue-600 flex-shrink-0" />
                         )
                       ) : (
-                        <ArrowUpDown size={14} className="text-gray-400" />
+                        <ArrowUpDown size={14} className="text-gray-400 flex-shrink-0" />
                       )}
                     </div>
                     {/* Resize handle - separate from sort area */}
@@ -200,11 +212,12 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🎯 Resize handle mousedown', field);
+                        console.log('🎯 Resize handle mousedown', field, 'colIndex:', colIndex);
                         setResizing({
                           column: field,
                           startX: e.clientX,
                           startWidth: columnWidths[field],
+                          colIndex: colIndex,
                         });
                       }}
                       title="Drag to resize column"
@@ -231,6 +244,11 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                       value={listing.TITLE}
                       onChange={(e) => handleCellUpdate(listing.id, 'TITLE', e.target.value)}
                       onBlur={() => setEditingCell(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setEditingCell(null);
+                        }
+                      }}
                       maxLength={150}
                       className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       autoFocus
@@ -251,6 +269,11 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                       value={listing.PRICE}
                       onChange={(e) => handleCellUpdate(listing.id, 'PRICE', parseFloat(e.target.value) || 0)}
                       onBlur={() => setEditingCell(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setEditingCell(null);
+                        }
+                      }}
                       className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       autoFocus
                     />
@@ -292,15 +315,31 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                   {editingCell?.id === listing.id && editingCell?.field === 'DESCRIPTION' ? (
                     <textarea
                       value={listing.DESCRIPTION}
-                      onChange={(e) => handleCellUpdate(listing.id, 'DESCRIPTION', e.target.value)}
+                      onChange={(e) => {
+                        handleCellUpdate(listing.id, 'DESCRIPTION', e.target.value);
+                        // Auto-resize textarea
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                      }}
                       onBlur={() => setEditingCell(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          setEditingCell(null);
+                        }
+                      }}
                       maxLength={5000}
-                      className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
+                      className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
+                      style={{ minHeight: '60px' }}
                       autoFocus
+                      onFocus={(e) => {
+                        // Auto-resize on focus
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                      }}
                     />
                   ) : (
-                    <div className="truncate" title={listing.DESCRIPTION}>{listing.DESCRIPTION || <span className="text-gray-400">Click to edit</span>}</div>
+                    <div className="whitespace-pre-wrap" title={listing.DESCRIPTION}>{listing.DESCRIPTION || <span className="text-gray-400">Click to edit</span>}</div>
                   )}
                 </td>
 
@@ -316,6 +355,11 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                       value={listing.CATEGORY}
                       onChange={(e) => handleCellUpdate(listing.id, 'CATEGORY', e.target.value)}
                       onBlur={() => setEditingCell(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setEditingCell(null);
+                        }
+                      }}
                       className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="e.g. Home & Garden"
                       autoComplete="off"
