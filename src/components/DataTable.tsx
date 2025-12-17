@@ -19,6 +19,9 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [showPriceDropdown, setShowPriceDropdown] = useState(false);
+  const [priceDropdownPosition, setPriceDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
     TITLE: true,
     PRICE: true,
@@ -573,30 +576,49 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   }}
                 >
                   {editingCell?.id === listing.id && editingCell?.field === 'PRICE' ? (
-                    <input
-                      type="text"
-                      list="price-suggestions"
-                      value={listing.PRICE}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Only allow positive integers (digits only)
-                        const digitsOnly = value.replace(/\D/g, '');
-                        // Remove leading zeros (e.g., "01" becomes "1", "002" becomes "2")
-                        const cleanedValue = digitsOnly.replace(/^0+(?=\d)/, '');
-                        handleCellUpdate(listing.id, 'PRICE', cleanedValue || '0');
-                      }}
-                      onBlur={() => setEditingCell(null)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setEditingCell(null);
-                        } else if (e.key === 'Escape') {
-                          setEditingCell(null);
-                        }
-                      }}
-                      className="w-full px-2 py-1 border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      autoComplete="off"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <input
+                        ref={priceInputRef}
+                        type="text"
+                        value={listing.PRICE}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Only allow positive integers (digits only)
+                          const digitsOnly = value.replace(/\D/g, '');
+                          // Remove leading zeros (e.g., "01" becomes "1", "002" becomes "2")
+                          const cleanedValue = digitsOnly.replace(/^0+(?=\d)/, '');
+                          handleCellUpdate(listing.id, 'PRICE', cleanedValue || '0');
+                        }}
+                        onFocus={(e) => {
+                          const rect = e.target.getBoundingClientRect();
+                          setPriceDropdownPosition({
+                            top: rect.bottom + window.scrollY,
+                            left: rect.left + window.scrollX,
+                            width: rect.width
+                          });
+                          setShowPriceDropdown(true);
+                        }}
+                        onBlur={(e) => {
+                          // Delay to allow click on dropdown
+                          setTimeout(() => {
+                            setShowPriceDropdown(false);
+                            setEditingCell(null);
+                          }, 200);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            setShowPriceDropdown(false);
+                            setEditingCell(null);
+                          } else if (e.key === 'Escape') {
+                            setShowPriceDropdown(false);
+                            setEditingCell(null);
+                          }
+                        }}
+                        className="w-full px-2 py-1 border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
+                        autoFocus
+                      />
+                    </div>
                   ) : (
                     <div>{listing.PRICE}</div>
                   )}
@@ -784,11 +806,36 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
         ))}
       </datalist>
 
-      <datalist id="price-suggestions">
-        {uniquePrices.map((price, index) => (
-          <option key={index} value={price} />
-        ))}
-      </datalist>
+      {/* Custom Price Dropdown */}
+      {showPriceDropdown && priceDropdownPosition && uniquePrices.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: `${priceDropdownPosition.top}px`,
+            left: `${priceDropdownPosition.left}px`,
+            width: `${priceDropdownPosition.width}px`,
+            zIndex: 1000
+          }}
+          className="bg-white dark:bg-gray-800 border dark:border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto"
+        >
+          {uniquePrices.map((price, index) => (
+            <div
+              key={index}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                if (editingCell) {
+                  handleCellUpdate(editingCell.id, 'PRICE', price);
+                  setShowPriceDropdown(false);
+                  setEditingCell(null);
+                }
+              }}
+              className="px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 text-gray-900 dark:text-gray-100"
+            >
+              {price}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Debug Panel */}
       <div className="mt-4 border-t dark:border-gray-700 pt-4">
