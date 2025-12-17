@@ -54,11 +54,8 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   ).sort();
 
   const uniquePrices = Array.from(
-    new Set(data.map(item => {
-      const price = typeof item.PRICE === 'number' ? item.PRICE : parseFloat(item.PRICE);
-      return !isNaN(price) && price > 0 ? price : null;
-    }).filter(price => price !== null))
-  ).sort((a, b) => (a as number) - (b as number));
+    new Set(data.map(item => item.PRICE).filter(price => price && price > 0))
+  ).sort((a, b) => Number(a) - Number(b));
 
   // Handle column resizing with mouse events
   useEffect(() => {
@@ -581,13 +578,25 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                         const value = e.target.value;
                         // Remove leading zeros while typing (except for "0" or "0.")
                         const cleanedValue = value.replace(/^0+(?=\d)/, '');
-                        // Parse to number, or keep as string if it's a partial input like "1."
-                        const numValue = cleanedValue === '' ? 0 : (cleanedValue.endsWith('.') ? cleanedValue : (parseFloat(cleanedValue) || 0));
+                        // Always save as number to ensure dropdown updates
+                        const numValue = cleanedValue === '' ? 0 : parseFloat(cleanedValue) || 0;
                         handleCellUpdate(listing.id, 'PRICE', numValue);
                       }}
-                      onBlur={() => setEditingCell(null)}
+                      onBlur={() => {
+                        // Ensure final value is a valid number
+                        const finalValue = parseFloat(String(listing.PRICE)) || 0;
+                        if (listing.PRICE !== finalValue) {
+                          handleCellUpdate(listing.id, 'PRICE', finalValue);
+                        }
+                        setEditingCell(null);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
+                          // Ensure final value is a valid number
+                          const finalValue = parseFloat(String(listing.PRICE)) || 0;
+                          if (listing.PRICE !== finalValue) {
+                            handleCellUpdate(listing.id, 'PRICE', finalValue);
+                          }
                           setEditingCell(null);
                         } else if (e.key === 'Escape') {
                           setEditingCell(null);
