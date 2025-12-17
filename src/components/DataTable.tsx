@@ -54,7 +54,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   ).sort();
 
   const uniquePrices = Array.from(
-    new Set(data.map(item => item.PRICE).filter(price => price !== null && price !== undefined && price !== ''))
+    new Set(data.map(item => String(item.PRICE)).filter(price => price && price.trim() !== ''))
   ).sort((a, b) => Number(a) - Number(b));
 
   // Debug logging
@@ -581,7 +581,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                       type="text"
                       list="price-suggestions"
                       value={listing.PRICE}
-                      onChange={(e) => handleCellUpdate(listing.id, 'PRICE', e.target.value.replace(/^0+(?=\d)/, '') || '0')}
+                      onChange={(e) => handleCellUpdate(listing.id, 'PRICE', e.target.value)}
                       onBlur={() => setEditingCell(null)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
