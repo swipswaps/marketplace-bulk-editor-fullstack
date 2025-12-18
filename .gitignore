@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 .vite.pid
 .vite.log
+
+# Chat logs and notes (may contain sensitive data)
+notes/
+*.txt
