@@ -3,6 +3,7 @@ import { FileUpload } from './components/FileUpload';
 import { DataTable } from './components/DataTable';
 import { ExportButton } from './components/ExportButton';
 import { TemplateUpload } from './components/TemplateUpload';
+import { LegalNotice } from './components/LegalNotice';
 import { Moon, Sun } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
@@ -182,6 +183,9 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Legal Notice */}
+          <LegalNotice compact={listings.length > 0} />
+
           {/* Template Upload Section */}
           <div className="mb-6">
             <TemplateUpload onTemplateLoad={handleTemplateLoad} currentTemplate={template} />
@@ -233,9 +237,12 @@ function App() {
           )}
 
           {/* Footer Info */}
-          <div className="mt-8 text-center text-sm text-gray-500">
-            <p>
+          <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="mb-2">
               Supports Facebook Marketplace bulk upload format • Max 50 listings per file
+            </p>
+            <p className="text-xs">
+              Not affiliated with Meta Platforms, Inc. • Facebook® is a registered trademark of Meta Platforms, Inc.
             </p>
           </div>
         </div>

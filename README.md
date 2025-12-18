@@ -6,6 +6,40 @@ A professional-grade web application for editing and combining Facebook Marketpl
 
 ---
 
+## ⚠️ IMPORTANT LEGAL DISCLAIMER
+
+**This software is NOT affiliated with, maintained, authorized, endorsed, or sponsored by Meta Platforms, Inc. or Facebook, Inc.**
+
+- **FACEBOOK®** and the Facebook logo are **registered trademarks** of Meta Platforms, Inc.
+- **MARKETPLACE™** is a **trademark** of Meta Platforms, Inc.
+- All trademarks are the property of their respective owners.
+
+### User Responsibility
+
+**BY USING THIS SOFTWARE, YOU AGREE THAT:**
+
+1. **Copyright & IP Compliance**: You are **solely responsible** for ensuring all listings comply with intellectual property laws. **NO counterfeit, replica, or unauthorized items.**
+
+2. **Facebook Commerce Policies**: You must comply with [Meta's Commerce Policies](https://www.facebook.com/policies/commerce). Prohibited items include:
+   - Alcohol, tobacco, and drugs
+   - Weapons, ammunition, and explosives
+   - Adult products and services
+   - Animals and endangered species
+   - Healthcare items (prescription drugs, medical devices)
+   - Recalled, illegal, or hazardous products
+   - Counterfeit or replica items
+   - Digital products and non-physical items
+
+3. **No Warranty**: This software is provided "AS IS" without warranty of any kind.
+
+4. **Limitation of Liability**: The developers assume **NO LIABILITY** for account suspensions, policy violations, legal consequences, or any damages arising from use of this software.
+
+5. **Use at Your Own Risk**: You are responsible for compliance with all applicable laws and platform policies.
+
+For complete terms, see the [LICENSE](LICENSE) file.
+
+---
+
 ## Table of Contents
 
 - [Features](#features)
