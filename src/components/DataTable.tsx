@@ -321,7 +321,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
   // Close column action menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (_e: MouseEvent) => {
       if (columnActionMenu) {
         setColumnActionMenu(null);
       }

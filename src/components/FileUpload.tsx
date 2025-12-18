@@ -127,7 +127,8 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
     setTemplateError(null);
 
     try {
-      const response = await fetch('/Marketplace_Bulk_Upload_Template.xlsx');
+      // Use relative path to work with GitHub Pages base path
+      const response = await fetch('./Marketplace_Bulk_Upload_Template.xlsx');
       if (!response.ok) {
         throw new Error('Failed to load template');
       }
