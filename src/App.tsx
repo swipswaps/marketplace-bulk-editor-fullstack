@@ -51,8 +51,15 @@ function App() {
     }
   }, [template]);
 
-  const handleTemplateLoad = (newTemplate: TemplateMetadata) => {
+  const handleTemplateLoad = (newTemplate: TemplateMetadata, isPreload = false) => {
     setTemplate(newTemplate);
+
+    // Show settings modal on first template preload (same as first file upload)
+    if (isPreload && !hasUploadedFile) {
+      setHasUploadedFile(true);
+      localStorage.setItem('hasUploadedFile', 'true');
+      setShowSettings(true);
+    }
   };
 
   const handleDataLoaded = (newData: MarketplaceListing[]) => {

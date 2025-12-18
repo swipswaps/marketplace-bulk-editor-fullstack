@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import type { TemplateMetadata } from '../types';
 
 interface TemplateUploadProps {
-  onTemplateLoad: (template: TemplateMetadata) => void;
+  onTemplateLoad: (template: TemplateMetadata, isPreload?: boolean) => void;
   currentTemplate: TemplateMetadata | null;
 }
 
@@ -37,7 +37,7 @@ export function TemplateUpload({ onTemplateLoad, currentTemplate }: TemplateUplo
     return 0;
   };
 
-  const processTemplate = useCallback((file: File) => {
+  const processTemplate = useCallback((file: File, isPreload = false) => {
     setIsProcessing(true);
     setError(null);
 
@@ -51,11 +51,11 @@ export function TemplateUpload({ onTemplateLoad, currentTemplate }: TemplateUplo
 
         // Find the header row
         const headerRowIndex = findHeaderRow(worksheet);
-        
+
         // Extract all rows before the header row
         const headerRows: string[][] = [];
         const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-        
+
         for (let row = range.s.r; row < headerRowIndex; row++) {
           const rowData: string[] = [];
           for (let col = range.s.c; col <= range.e.c; col++) {
@@ -81,7 +81,7 @@ export function TemplateUpload({ onTemplateLoad, currentTemplate }: TemplateUplo
           columnHeaders
         };
 
-        onTemplateLoad(template);
+        onTemplateLoad(template, isPreload);
         setIsProcessing(false);
       } catch (err) {
         setError(`Failed to process template: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -120,7 +120,7 @@ export function TemplateUpload({ onTemplateLoad, currentTemplate }: TemplateUplo
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
 
-      processTemplate(file);
+      processTemplate(file, true); // Pass isPreload = true to trigger settings modal
     } catch (err) {
       setError('Failed to load preloaded template. Please upload your own template.');
       setIsProcessing(false);
