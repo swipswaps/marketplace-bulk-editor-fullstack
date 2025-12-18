@@ -705,9 +705,37 @@ cd marketplace-bulk-editor
 # Install dependencies
 npm install
 
-# Start dev server
+# Start dev server (RECOMMENDED: use scripts)
+./start.sh
+
+# Or manually (not recommended - can leave orphaned processes)
 npm run dev
 ```
+
+### Development Scripts
+
+**Use these scripts for clean process management:**
+
+```bash
+# Start the dev server
+./start.sh
+
+# Stop the dev server
+./stop.sh
+
+# Interactive management (check status, restart, view logs)
+./dev.sh
+```
+
+**Why use scripts instead of `npm run dev`?**
+
+- ✅ **No port conflicts** - Automatically detects and kills orphaned processes
+- ✅ **Clean shutdown** - Ensures no stray processes remain
+- ✅ **PID tracking** - Knows exactly what's running
+- ✅ **Log management** - Captures output to `.vite.log`
+- ✅ **Status checking** - `./dev.sh` shows if server is already running
+
+**⚠️ Important:** If you run `npm run dev` manually, always use `./stop.sh` to clean up before starting again.
 
 **Development Server:**
 - URL: http://localhost:5173

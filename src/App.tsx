@@ -220,27 +220,33 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Combined Upload Section */}
-          <div className="mb-8">
-            <FileUpload
-              onDataLoaded={handleDataLoaded}
-              onTemplateDetected={handleTemplateDetected}
-              currentTemplate={template}
-              onTemplateLoad={handleTemplateLoad}
-            />
-          </div>
-
-          {/* Data Table Section */}
-          {listings.length > 0 && (
+          {/* Data Table Section - Show when we have data */}
+          {listings.length > 0 ? (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Listings</h2>
-                  <p className="text-sm text-gray-500">Manage your marketplace inventory ({listings.length} items)</p>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Listings</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {listings.length} {listings.length === 1 ? 'item' : 'items'}
+                    {template && template.columnHeaders.length > 0 && (
+                      <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                        • Template: {template.sheetName}
+                      </span>
+                    )}
+                  </p>
                 </div>
+
+                {/* Compact upload button when data exists */}
+                <FileUpload
+                  onDataLoaded={handleDataLoaded}
+                  onTemplateDetected={handleTemplateDetected}
+                  currentTemplate={template}
+                  onTemplateLoad={handleTemplateLoad}
+                  compact={true}
+                />
               </div>
 
-              <div className="bg-white rounded-lg shadow border border-gray-200">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                 <div className="p-6">
                   <DataTable
                     data={listings}
@@ -255,19 +261,15 @@ function App() {
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Empty State */}
-          {listings.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
-              <FileSpreadsheet className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No listings yet
-              </h3>
-              <p className="text-sm text-gray-500">
-                Upload Excel files to get started
-              </p>
-            </div>
+          ) : (
+            /* Empty State with integrated upload */
+            <FileUpload
+              onDataLoaded={handleDataLoaded}
+              onTemplateDetected={handleTemplateDetected}
+              currentTemplate={template}
+              onTemplateLoad={handleTemplateLoad}
+              compact={false}
+            />
           )}
 
           {/* Footer Info */}

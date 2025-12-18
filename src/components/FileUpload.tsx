@@ -9,6 +9,7 @@ interface FileUploadProps {
   onTemplateDetected?: (template: TemplateMetadata, sampleData: MarketplaceListing[]) => void;
   currentTemplate: TemplateMetadata | null;
   onTemplateLoad: (template: TemplateMetadata, isPreload?: boolean) => void;
+  compact?: boolean; // Show compact button version when data exists
 }
 
 interface TemplateDetectionModal {
@@ -18,7 +19,7 @@ interface TemplateDetectionModal {
   sampleData: MarketplaceListing[];
 }
 
-export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, onTemplateLoad }: FileUploadProps) {
+export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, onTemplateLoad, compact = false }: FileUploadProps) {
   const [templateModal, setTemplateModal] = useState<TemplateDetectionModal>({
     show: false,
     fileName: '',
@@ -321,6 +322,117 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
     setTemplateModal({ show: false, fileName: '', template: null, sampleData: [] });
   };
 
+  const renderPreloadWarningModal = () => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="flex items-start gap-3 mb-4">
+          <AlertTriangle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={24} />
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Use Sample Template?
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              The bundled template may be outdated. For best results, download the latest template from Facebook.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowPreloadWarning(false)}
+            className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handlePreloadTemplate}
+            className="flex-1 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            Use Sample Template
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTemplateDetectionModal = () => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6">
+        <div className="flex items-start gap-3 mb-4">
+          <AlertCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={24} />
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Template File Detected
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              <strong>{templateModal.fileName}</strong> appears to be a Facebook Marketplace template
+              with {templateModal.sampleData.length} sample listing(s).
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              What would you like to do?
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {/* Option 1: Load sample data */}
+          <button
+            onClick={handleLoadSampleData}
+            className="w-full flex items-start gap-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+          >
+            <Table className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">Load Sample Data Only</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Add the {templateModal.sampleData.length} sample listing(s) to your table for editing
+              </p>
+            </div>
+          </button>
+
+          {/* Option 2: Save as template */}
+          <button
+            onClick={handleSaveAsTemplate}
+            className="w-full flex items-start gap-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-500 dark:hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-left"
+          >
+            <FileSpreadsheet className="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">Save as Template Only</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Save the template structure for future exports (don't load sample data)
+              </p>
+            </div>
+          </button>
+
+          {/* Option 3: Both */}
+          <button
+            onClick={handleLoadBoth}
+            className="w-full flex items-start gap-3 p-4 border-2 border-purple-300 dark:border-purple-600 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors text-left"
+          >
+            <div className="flex gap-1 flex-shrink-0 mt-0.5">
+              <FileSpreadsheet className="text-purple-600 dark:text-purple-400" size={16} />
+              <Table className="text-purple-600 dark:text-purple-400" size={16} />
+            </div>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">Do Both</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Save template structure AND load sample data into table
+              </p>
+            </div>
+          </button>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={handleCancel}
+            className="w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -331,229 +443,143 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
     multiple: true
   });
 
-  return (
-    <>
-      {/* Combined Upload Area */}
-      <div className="space-y-4">
-        {/* Template Status Section */}
-        {currentTemplate && currentTemplate.columnHeaders.length > 0 && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1">
-                <CheckCircle className="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" size={20} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                    Template Loaded
-                  </p>
-                  <div className="mt-2 text-xs text-green-700 dark:text-green-300 space-y-1">
-                    <p>Sheet: <span className="font-mono">{currentTemplate.sheetName}</span></p>
-                    <p>Header rows: {currentTemplate.headerRows.length}</p>
-                    <p>Columns: {currentTemplate.columnHeaders.filter(h => h).join(', ')}</p>
-                    {currentTemplate.sampleData && currentTemplate.sampleData.length > 0 && (
-                      <p>Sample data: {currentTemplate.sampleData.length} listing(s)</p>
-                    )}
-                  </div>
-
-                  {/* Load Sample Data Button */}
-                  {currentTemplate.sampleData && currentTemplate.sampleData.length > 0 && (
-                    <button
-                      onClick={handleLoadTemplateSampleData}
-                      className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
-                    >
-                      <Table size={14} />
-                      Load {currentTemplate.sampleData.length} Sample Listing{currentTemplate.sampleData.length !== 1 ? 's' : ''} into Editor
-                    </button>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={handleClearTemplate}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 rounded transition-colors"
-              >
-                <X size={14} />
-                Clear
-              </button>
-            </div>
+  // Compact mode - just a button in the header
+  if (compact) {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <div {...getRootProps()}>
+            <input {...getInputProps()} />
+            <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <Upload size={16} />
+              Import More
+            </button>
           </div>
-        )}
 
-        {/* Main Upload Area */}
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
-          }`}
-        >
-          <input {...getInputProps()} />
-          <Upload className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-          {isDragActive ? (
-            <p className="text-lg text-blue-600 dark:text-blue-400">Drop the files here...</p>
-          ) : (
-            <div>
-              <p className="text-lg text-gray-700 dark:text-gray-300 mb-2">
-                Drag & drop Excel files here, or click to select
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Supports .xlsx, .xls, and .csv files • Upload data files or Facebook templates
-              </p>
-
-              {/* Template Upload Options */}
-              {!currentTemplate || currentTemplate.columnHeaders.length === 0 ? (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                    📋 Need a Facebook Marketplace template?
-                  </p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <a
-                      href="https://www.facebook.com/business/help/125074381480892"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      <ExternalLink size={12} />
-                      Get official template from Facebook
-                    </a>
-                    <span className="text-xs text-gray-400">or</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowPreloadWarning(true);
-                      }}
-                      className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
-                    >
-                      <Download size={12} />
-                      Use bundled template (may be outdated)
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
+          {/* Load template sample data if available */}
+          {currentTemplate?.sampleData && currentTemplate.sampleData.length > 0 && (
+            <button
+              onClick={handleLoadTemplateSampleData}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+            >
+              <Table size={16} />
+              Load {currentTemplate.sampleData.length} Sample{currentTemplate.sampleData.length !== 1 ? 's' : ''}
+            </button>
           )}
         </div>
 
-        {/* Template Error */}
-        {templateError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-            <p className="text-sm text-red-800 dark:text-red-200">{templateError}</p>
+        {/* Modals */}
+        {showPreloadWarning && renderPreloadWarningModal()}
+        {templateModal.show && renderTemplateDetectionModal()}
+      </>
+    );
+  }
+
+  // Full mode - empty state with integrated upload
+  return (
+    <>
+      <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+        {/* Empty State */}
+        <div className="max-w-md mx-auto">
+          <FileSpreadsheet className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-6" />
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+            Get Started with Your Listings
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            Import your Facebook Marketplace listings from an Excel file to edit them in bulk
+          </p>
+
+          {/* Primary Upload Area */}
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-lg p-8 cursor-pointer transition-all ${
+              isDragActive
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-105'
+                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <input {...getInputProps()} />
+            <Upload className={`mx-auto h-10 w-10 mb-3 transition-colors ${
+              isDragActive ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
+            }`} />
+            {isDragActive ? (
+              <p className="text-lg font-medium text-blue-600 dark:text-blue-400">Drop your file here</p>
+            ) : (
+              <>
+                <p className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                  Drop your file here or click to browse
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Supports .xlsx, .xls, and .csv files
+                </p>
+              </>
+            )}
           </div>
-        )}
+
+          {/* Template Options - Collapsible */}
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Don't have a file yet?
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="https://www.facebook.com/business/help/125074381480892"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+              >
+                <ExternalLink size={16} />
+                Download Facebook Template
+              </a>
+              <button
+                onClick={() => setShowPreloadWarning(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Download size={16} />
+                Use Sample Template
+              </button>
+            </div>
+          </div>
+
+          {/* Template Status - Show if template loaded */}
+          {currentTemplate && currentTemplate.columnHeaders.length > 0 && (
+            <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-sm">
+                <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
+                <span className="font-medium text-green-900 dark:text-green-100">
+                  Template ready: {currentTemplate.sheetName}
+                </span>
+                <button
+                  onClick={handleClearTemplate}
+                  className="ml-2 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {currentTemplate.sampleData && currentTemplate.sampleData.length > 0 && (
+                <button
+                  onClick={handleLoadTemplateSampleData}
+                  className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                >
+                  <Table size={16} />
+                  Load {currentTemplate.sampleData.length} Sample Listing{currentTemplate.sampleData.length !== 1 ? 's' : ''}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Error Display */}
+          {templateError && (
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-800 dark:text-red-200">{templateError}</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Preload Warning Modal */}
-      {showPreloadWarning && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <AlertTriangle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={24} />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Use Bundled Template?
-                </h3>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                  The bundled template may be outdated. For best results, download the latest template from Facebook.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPreloadWarning(false)}
-                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePreloadTemplate}
-                className="flex-1 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-              >
-                Use Bundled Template
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Template Detection Modal */}
-      {templateModal.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <AlertCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={24} />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Template File Detected
-                </h3>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                  <strong>{templateModal.fileName}</strong> appears to be a Facebook Marketplace template
-                  with {templateModal.sampleData.length} sample listing(s).
-                </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-                  What would you like to do?
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* Option 1: Load sample data */}
-              <button
-                onClick={handleLoadSampleData}
-                className="w-full flex items-start gap-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
-              >
-                <Table className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={20} />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Load Sample Data Only</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Add the {templateModal.sampleData.length} sample listing(s) to your table for editing
-                  </p>
-                </div>
-              </button>
-
-              {/* Option 2: Save as template */}
-              <button
-                onClick={handleSaveAsTemplate}
-                className="w-full flex items-start gap-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-500 dark:hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-left"
-              >
-                <FileSpreadsheet className="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" size={20} />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Save as Template Only</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Save the template structure for future exports (don't load sample data)
-                  </p>
-                </div>
-              </button>
-
-              {/* Option 3: Both */}
-              <button
-                onClick={handleLoadBoth}
-                className="w-full flex items-start gap-3 p-4 border-2 border-purple-300 dark:border-purple-600 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors text-left"
-              >
-                <div className="flex gap-1 flex-shrink-0 mt-0.5">
-                  <FileSpreadsheet className="text-purple-600 dark:text-purple-400" size={16} />
-                  <Table className="text-purple-600 dark:text-purple-400" size={16} />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Do Both</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Save template structure AND load sample data into table
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleCancel}
-                className="w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      {showPreloadWarning && renderPreloadWarningModal()}
+      {templateModal.show && renderTemplateDetectionModal()}
     </>
   );
 }
