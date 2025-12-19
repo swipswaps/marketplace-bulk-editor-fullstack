@@ -78,7 +78,7 @@ def create_listing(current_user):
         offer_shipping=data.get('offer_shipping', 'No'),
         source=data.get('source', 'manual'),
         ocr_scan_id=data.get('ocr_scan_id'),
-        metadata=data.get('metadata')
+        extra_data=data.get('extra_data')  # Fixed: was 'metadata' (Rule 16 - ORM reserved keyword)
     )
     
     try:
@@ -173,7 +173,7 @@ def bulk_create_listings(current_user):
                 offer_shipping=listing_data.get('offer_shipping', 'No'),
                 source=listing_data.get('source', 'import'),
                 ocr_scan_id=listing_data.get('ocr_scan_id'),
-                metadata=listing_data.get('metadata')
+                extra_data=listing_data.get('extra_data')  # Fixed: was 'metadata' (Rule 16 - ORM reserved keyword)
             )
             db.session.add(listing)
             created_listings.append(listing)

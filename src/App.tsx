@@ -34,6 +34,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [exportPreviewContent, setExportPreviewContent] = useState<React.ReactNode | null>(null);
+  const [marketplace, setMarketplace] = useState<'facebook' | 'ebay' | 'amazon'>('facebook');
   const [hasUploadedFile, setHasUploadedFile] = useState(() => {
     return localStorage.getItem('hasUploadedFile') === 'true';
   });
@@ -212,14 +213,34 @@ function App() {
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-between gap-4">
-            {/* Left: Logo and Title */}
-            <div className="flex items-center gap-2">
-              <div className="bg-blue-600 dark:bg-blue-500 p-2 rounded-lg text-white">
-                <FileSpreadsheet size={20} />
+            {/* Left: Logo, Title, and Marketplace Selector */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-blue-600 dark:bg-blue-500 p-2 rounded-lg text-white">
+                  <FileSpreadsheet size={20} />
+                </div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                  Marketplace Bulk Editor
+                </h1>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                Marketplace Bulk Editor
-              </h1>
+
+              {/* Marketplace Selector */}
+              <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-4">
+                <label htmlFor="marketplace-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Platform:
+                </label>
+                <select
+                  id="marketplace-select"
+                  value={marketplace}
+                  onChange={(e) => setMarketplace(e.target.value as 'facebook' | 'ebay' | 'amazon')}
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  title="Select marketplace platform - different platforms use different databases"
+                >
+                  <option value="facebook">📘 Facebook Marketplace</option>
+                  <option value="ebay">🛒 eBay</option>
+                  <option value="amazon">📦 Amazon</option>
+                </select>
+              </div>
             </div>
 
             {/* Center: Backend Status and Sync Status */}
@@ -270,33 +291,34 @@ function App() {
 
             {/* Database Buttons (only when authenticated) */}
             {isAuthenticated && (
-              <>
+              <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
                 <button
                   onClick={handleSaveToDatabase}
                   disabled={isSyncing || listings.length === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed rounded-lg transition-colors"
-                  title="Save all listings to database"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  title={`Save all ${listings.length} listing(s) to ${marketplace.toUpperCase()} database`}
                 >
                   <Upload size={16} />
-                  {isSyncing ? 'Saving...' : 'Save to DB'}
+                  {isSyncing ? 'Saving...' : 'Save'}
                 </button>
                 <button
                   onClick={handleLoadFromDatabase}
                   disabled={isSyncing}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors"
-                  title="Load listings from database"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  title={`Load listings from ${marketplace.toUpperCase()} database`}
                 >
                   <Download size={16} />
-                  {isSyncing ? 'Loading...' : 'Load from DB'}
+                  {isSyncing ? 'Loading...' : 'Load'}
                 </button>
-              </>
+              </div>
             )}
 
             {listings.length > 0 && (
-              <>
+              <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
                 <button
                   onClick={handleClearAll}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors shadow-sm"
+                  title={`Clear all ${listings.length} listing(s) - this cannot be undone!`}
                 >
                   <Trash2 size={16} />
                   Clear All
@@ -308,7 +330,7 @@ function App() {
                   template={template}
                   onPreviewRender={setExportPreviewContent}
                 />
-              </>
+              </div>
             )}
             </div>
           </div>
