@@ -1,6 +1,7 @@
 ---
 type: "always_apply"
-description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, Selenium testing (VISIBLE mode, OCR verification, screenshots in README), complete workflow testing, Docker deployment, ORM safety, feature preservation"
+description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, Selenium testing (VISIBLE mode, OCR verification, screenshots in README), complete workflow testing, Docker deployment, ORM safety, feature preservation, use existing browser windows"
+version: "3.3"
 ---
 
 1. Workspace Authority (HARD STOP)
@@ -340,3 +341,55 @@ Technical
 Factual
 
 No celebratory language.
+
+## Rule 23: Use Existing Browser Windows (CRITICAL)
+
+When the user says:
+- "use xdotool to find the open firefox window"
+- "test the button in the open firefox window"
+- "press save in the open firefox window"
+- "the error persists" (implies they already tested)
+
+**The assistant MUST:**
+1. **NOT create a new browser instance**
+2. **NOT write a new test script**
+3. **Use xdotool to interact with the EXISTING window**
+4. **Assume the user has already done setup** (login, data upload, etc.)
+
+**Forbidden Actions:**
+- Creating new Selenium WebDriver instances
+- Writing test scripts that start from scratch
+- Ignoring "the open firefox window" instruction
+- Assuming the user hasn't tested yet
+
+**Required Actions:**
+1. Use `xdotool search --name "Firefox"` to find window ID
+2. Use `xdotool windowactivate <ID>` to focus the window
+3. Use `xdotool` commands to interact with the existing window
+4. OR ask the user what they see in the browser
+
+**Why This Rule Exists:**
+- User has already spent time setting up the browser state
+- Creating new instances wastes user's time
+- User explicitly requested using the existing window
+- "The error persists" means user already tested and saw failure
+
+**Example Violation:**
+```python
+# WRONG - Creates new browser
+driver = webdriver.Firefox(options=options)
+driver.get("http://localhost:5173")
+```
+
+**Correct Approach:**
+```bash
+# RIGHT - Use existing window
+xdotool search --name "Firefox" windowactivate
+# Then ask user what they see or use xdotool to click
+```
+
+**If the assistant violates this rule:**
+- User will have to repeat the instruction
+- User's time is wasted
+- User's frustration increases
+- Assistant demonstrates it's not listening
