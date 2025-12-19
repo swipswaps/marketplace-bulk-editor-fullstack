@@ -1,0 +1,23 @@
+"""
+Initialize database
+"""
+from app import create_app
+from models.user import db
+
+def init_database():
+    """Initialize database tables"""
+    app = create_app()
+    
+    with app.app_context():
+        print("Creating database tables...")
+        db.create_all()
+        print("✓ Database tables created successfully")
+        
+        # Print table names
+        print("\nCreated tables:")
+        for table in db.metadata.sorted_tables:
+            print(f"  - {table.name}")
+
+if __name__ == '__main__':
+    init_database()
+

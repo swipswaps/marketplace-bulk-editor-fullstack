@@ -1,0 +1,69 @@
+"""
+User validation schemas
+"""
+from marshmallow import Schema, fields, validate, validates, ValidationError
+import re
+
+
+class UserSchema(Schema):
+    """User serialization schema"""
+    id = fields.Str(dump_only=True)
+    email = fields.Email(required=True)
+    first_name = fields.Str(allow_none=True)
+    last_name = fields.Str(allow_none=True)
+    is_active = fields.Bool(dump_only=True)
+    is_admin = fields.Bool(dump_only=True)
+    email_verified = fields.Bool(dump_only=True)
+    last_login = fields.DateTime(dump_only=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+
+
+class RegisterSchema(Schema):
+    """User registration schema"""
+    email = fields.Email(required=True, validate=validate.Length(max=255))
+    password = fields.Str(required=True, load_only=True, validate=validate.Length(min=8, max=128))
+    first_name = fields.Str(validate=validate.Length(max=100))
+    last_name = fields.Str(validate=validate.Length(max=100))
+    
+    @validates('password')
+    def validate_password(self, value):
+        """Validate password strength"""
+        if not re.search(r'[A-Z]', value):
+            raise ValidationError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', value):
+            raise ValidationError('Password must contain at least one lowercase letter')
+        if not re.search(r'[0-9]', value):
+            raise ValidationError('Password must contain at least one digit')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise ValidationError('Password must contain at least one special character')
+
+
+class LoginSchema(Schema):
+    """User login schema"""
+    email = fields.Email(required=True)
+    password = fields.Str(required=True, load_only=True)
+
+
+class PasswordResetSchema(Schema):
+    """Password reset schema"""
+    email = fields.Email(required=True)
+
+
+class PasswordResetConfirmSchema(Schema):
+    """Password reset confirmation schema"""
+    token = fields.Str(required=True)
+    password = fields.Str(required=True, load_only=True, validate=validate.Length(min=8, max=128))
+    
+    @validates('password')
+    def validate_password(self, value):
+        """Validate password strength"""
+        if not re.search(r'[A-Z]', value):
+            raise ValidationError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', value):
+            raise ValidationError('Password must contain at least one lowercase letter')
+        if not re.search(r'[0-9]', value):
+            raise ValidationError('Password must contain at least one digit')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise ValidationError('Password must contain at least one special character')
+

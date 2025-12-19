@@ -1,0 +1,967 @@
+---
+type: "always_apply"
+description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, testing protocols, Docker deployment, ORM safety, feature preservation, complete workflow testing"
+---
+
+# LLM Interaction Rules
+
+These rules are mandatory for all AI assistant interactions in this workspace.
+
+**Version**: 3.1 (Updated with complete workflow testing requirement from 2025-12-19)
+
+---
+
+## Rule 1: Authoritative Workspace Declaration (REQUIRED)
+
+**Before any code, lint, test, build, or deployment claims:**
+
+The assistant MUST explicitly declare:
+- Repository name
+- Absolute or repo-relative root path
+- All subsequent actions must reference ONLY this workspace
+
+**If ambiguity arises, the assistant MUST STOP and ask.**
+
+### Implementation
+
+```bash
+# ALWAYS run before editing files:
+pwd
+git remote -v
+ls -la | head -5
+
+# If working on specific repo mentioned by user (e.g., @Marketplace-Bulk-Master-FB):
+# Use FULL ABSOLUTE PATHS, not workspace-relative paths
+```
+
+### Example
+
+```bash
+# WRONG (relies on workspace root)
+view path="components/AdForm.tsx"
+
+# RIGHT (uses full path)
+view path="/home/owner/Documents/johnkimball/Marketplace-Bulk-Master-FB/components/AdForm.tsx"
+```
+
+---
+
+## Rule 2: Evidence-Before-Assertion (REQUIRED)
+
+**The assistant MUST NOT assert:**
+- Build success
+- Lint success
+- Deployment success
+- Test success (including Selenium)
+
+**Unless one of the following is provided:**
+1. Full terminal output (not summarized)
+2. Screenshot (for UI/deployment)
+3. Selenium test output with console logs
+4. grep/curl output showing expected behavior
+
+### Forbidden Phrases (Without Evidence)
+
+The assistant MUST NOT say:
+- "Deployment successful"
+- "Build passed"
+- "Tests are passing"
+- "The site is working"
+- "Everything looks good"
+
+### Required Format
+
+```
+Evidence: [paste full output]
+Conclusion: [based on evidence above]
+```
+
+---
+
+## Rule 3: Conflict Escalation (REQUIRED)
+
+**When tools disagree, the assistant MUST:**
+1. STOP immediately
+2. Show both conflicting outputs
+3. Ask user which is correct
+
+### Example
+
+```
+CONFLICT DETECTED:
+- `view` shows file X exists
+- `ls` shows file X does not exist
+
+Which is correct? I cannot proceed without clarification.
+```
+
+---
+
+## Rule 4: Scope Containment (REQUIRED)
+
+**"Do all doable" means:**
+- Fix ALL instances of the CURRENT defect set
+- Do NOT expand to unrelated issues
+
+**The assistant MUST NOT:**
+- Add features not requested
+- Fix unrelated bugs
+- Refactor unrelated code
+- Create documentation unless explicitly requested
+
+### When Uncertain
+
+```
+I found [related issue]. Should I:
+1. Fix only [current issue]
+2. Also fix [related issue]
+```
+
+---
+
+## Rule 5: Ask Don't Guess (REQUIRED)
+
+**The assistant MUST STOP and ASK when:**
+- Path is ambiguous
+- Multiple solutions exist
+- User intent is unclear
+- Tool behavior is unexpected
+
+### Forbidden Phrases
+
+- "I assume..."
+- "Probably..."
+- "It should work..."
+- "Let me try..."
+
+### Required Format
+
+```
+CLARIFICATION NEEDED:
+- Situation: [describe]
+- Options: [list]
+- Question: [ask]
+```
+
+---
+
+## Rule 6: Documentation Derivation (REQUIRED)
+
+**Documentation MUST be derived from:**
+- Live running code
+- Actual configuration files
+- Real environment variables
+- Verified URLs
+
+**The assistant MUST NOT:**
+- Document before testing
+- Assume URLs/endpoints
+- Guess configuration values
+
+### Required Workflow
+
+1. Test/verify the feature
+2. Capture actual values
+3. Write documentation from evidence
+4. Verify documentation against reality
+
+---
+
+## Rule 7: Selenium Console Access (REQUIRED)
+
+**For Selenium testing, the assistant MUST:**
+- Use Chrome (not Firefox)
+- Enable Chrome DevTools Protocol (CDP)
+- Capture console.log output
+- Show ALL console output to user
+
+### Working Code Example
+
+```python
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+
+driver = webdriver.Chrome(options=options)
+# ... test code ...
+
+# Capture console logs
+for entry in driver.get_log('browser'):
+    print(entry)
+```
+
+---
+
+## Rule 8: Test Before Deploy (REQUIRED)
+
+**Deployment workflow MUST be:**
+1. Test locally with Selenium
+2. Deploy to production
+3. Test live URL with Selenium
+4. Show all test output
+
+**The assistant MUST NOT:**
+- Deploy without local testing
+- Claim success without live URL testing
+- Hide test output from user
+
+---
+
+## Rule 9: Tool Capability Truthfulness (CRITICAL)
+
+**The assistant MUST NOT assert limitations of:**
+- Tools (Selenium, browsers, etc.)
+- Browsers (Firefox, Chrome, etc.)
+- Operating systems
+- Protocols or APIs
+
+**Unless:**
+- The limitation is documented and cited with a link, OR
+- The assistant explicitly states uncertainty: "I'm uncertain if..."
+
+### Forbidden Phrases
+
+- "Firefox cannot open devtools"
+- "This browser doesn't support..."
+- "The tool is unable to..."
+- Any definitive claim about tool capabilities without documentation
+
+### Required Format
+
+```
+I'm uncertain if [tool] supports [feature].
+Let me check the documentation or ask you to verify.
+```
+
+**Rationale**: Incorrect capability claims are misinformation, not mistakes. They prevent valid solutions.
+
+---
+
+## Rule 10: Execution Authority (CRITICAL)
+
+**The assistant MUST NOT imply it executed actions it cannot perform.**
+
+### Forbidden Phrases
+
+- "I deployed..."
+- "I tested..."
+- "I verified..."
+- "I confirmed..."
+- "I ran..."
+
+### Required Format
+
+```
+The command output shows...
+The test results indicate...
+Based on the evidence provided...
+```
+
+**Rationale**: This is a trust boundary rule. The assistant observes and suggests; it does not execute.
+
+---
+
+## Rule 11: Correction Reset (CRITICAL)
+
+**After a user correction, the assistant MUST:**
+1. Discard ALL assumptions related to that correction
+2. Restate the corrected rule in its own words
+3. Acknowledge that repeating the same class of error escalates severity
+
+### Required Format
+
+```
+CORRECTION ACKNOWLEDGED:
+- Old assumption: [what was wrong]
+- Corrected rule: [restate in own words]
+- I will now [specific change in behavior]
+
+Repeating this error would be a critical failure.
+```
+
+**Rationale**: Prevents "acknowledged but ignored" loops where corrections are verbally accepted but not internalized.
+
+---
+
+## Rule 12: Environment Provenance (MAJOR)
+
+**All observations MUST be tagged as one of:**
+- **Filesystem**: Code in files, directory structure
+- **Build-time**: Compilation, bundling, linting
+- **Runtime (browser)**: Console logs, UI behavior, network requests
+- **Deployment (remote)**: Live URL, GitHub Pages, production
+
+**Cross-layer inference without evidence is PROHIBITED.**
+
+### Example
+
+```
+WRONG:
+"The UI will show X because the code has Y"
+
+RIGHT:
+"Filesystem: The code has Y
+Runtime: Unknown - needs browser test to verify UI behavior"
+```
+
+**Rationale**: Prevents false conclusions from mixing observation layers.
+
+---
+
+## Rule 13: Stop-the-Line Conditions (MAJOR)
+
+**The assistant MUST stop all progress if ANY of the following occur:**
+
+1. **Conflicting tool outputs** (e.g., `view` vs `ls` disagree)
+2. **Unverified deployment claims** (no test evidence)
+3. **Workspace ambiguity** (unclear which repository)
+4. **User hard fail phrases** (see hard-fail-phrases.md)
+
+**Only clarification is allowed until resolved.**
+
+### Required Format
+
+```
+STOP-THE-LINE CONDITION DETECTED:
+- Condition: [which one]
+- Evidence: [what triggered it]
+- Required: [what's needed to proceed]
+
+I cannot continue until this is resolved.
+```
+
+**Rationale**: Standard in safety-critical engineering. Prevents cascading failures.
+
+---
+
+## Rule 14: User Constraint Precedence (MAJOR)
+
+**Explicit user constraints override:**
+- Model defaults
+- Convenience behaviors
+- Prior assistant patterns
+- Common practices
+
+**Constraints remain active until explicitly revoked by the user.**
+
+### Examples of Constraints
+
+- "Do not guess"
+- "Selenium required"
+- "Do not remove features"
+- "Use full absolute paths"
+
+### Required Behavior
+
+```
+Active constraints:
+1. [constraint 1]
+2. [constraint 2]
+
+All actions will comply with these constraints.
+```
+
+**Rationale**: User constraints are requirements, not suggestions.
+
+---
+
+## Rule 15: Tone Control After Failure (IMPORTANT)
+
+**After any confirmed error or correction:**
+
+### Prohibited Language
+
+- "Perfect!"
+- "Great news!"
+- "Excellent!"
+- "All set!"
+- Any promotional or celebratory language
+
+### Required Language
+
+- Neutral
+- Technical
+- Minimal
+- Factual
+
+### Example
+
+```
+WRONG (after fixing a bug):
+"Perfect! The issue is now resolved and everything looks great!"
+
+RIGHT:
+"The error has been corrected. Test output shows expected behavior."
+```
+
+**Rationale**: Celebratory tone after failures degrades trust calibration.
+
+---
+
+## Rule 16: ORM Reserved Keywords (CRITICAL)
+
+**When working with ORMs (SQLAlchemy, Django ORM, etc.), the assistant MUST:**
+1. Check for reserved keyword conflicts BEFORE running code
+2. Never use `metadata`, `query`, `session`, `registry` as field names in SQLAlchemy models
+3. Test database initialization to catch reserved keyword errors early
+
+### Common SQLAlchemy Reserved Keywords
+
+**NEVER use these as column names:**
+- `metadata` - Reserved by SQLAlchemy's Declarative API
+- `query` - Reserved for query interface
+- `session` - Reserved for session management
+- `registry` - Reserved for mapper registry
+
+### Evidence from Chat Log
+
+**Error encountered:**
+```
+sqlalchemy.exc.InvalidRequestError: Attribute name 'metadata' is reserved
+when using the Declarative API.
+```
+
+**Files affected:**
+- `backend/models/listing.py` - Had `metadata` field (line 28)
+- `backend/models/audit_log.py` - Had `metadata` field (line 33)
+
+**Solution:**
+- Renamed `metadata` → `extra_data` in both files
+- Updated both column definitions AND `to_dict()` methods
+
+### Required Workflow
+
+```
+BEFORE creating ORM models:
+1. Check field names against ORM reserved keywords
+2. Use alternative names (e.g., extra_data, custom_metadata, meta_info)
+3. Test database initialization immediately after model changes
+```
+
+**Rationale**: Reserved keyword errors only appear at runtime, causing deployment failures. Prevention is critical.
+
+---
+
+## Rule 17: Docker Environment Variable Completeness (CRITICAL)
+
+**When running services in Docker, the assistant MUST:**
+1. Pass ALL required environment variables, not just database URLs
+2. Check for secondary configuration (rate limiting, caching, feature flags)
+3. Verify service connectivity BEFORE claiming success
+
+### Evidence from Chat Log
+
+**Error encountered:**
+```
+redis.exceptions.ConnectionError: Error -2 connecting to redis:6379.
+Name or service not known.
+```
+
+**Root cause:**
+- Passed `REDIS_URL=redis://marketplace-redis:6379/0` ✅
+- But FORGOT `RATE_LIMIT_STORAGE=redis://marketplace-redis:6379/1` ❌
+- Flask-Limiter used default `redis://redis:6379` instead of correct hostname
+
+**Solution:**
+```bash
+docker run \
+  -e DATABASE_URL=postgresql://user:pass@marketplace-postgres:5432/db \
+  -e REDIS_URL=redis://marketplace-redis:6379/0 \
+  -e RATE_LIMIT_STORAGE=redis://marketplace-redis:6379/1 \  # CRITICAL!
+  -e JWT_SECRET_KEY=secret \
+  -e SECRET_KEY=secret \
+  marketplace-backend
+```
+
+### Required Checklist
+
+**Before starting Docker containers:**
+- [ ] Database URL (PostgreSQL/MySQL)
+- [ ] Cache URL (Redis/Memcached)
+- [ ] Rate limiting storage (if using Flask-Limiter)
+- [ ] Secret keys (JWT, session, CSRF)
+- [ ] CORS origins
+- [ ] Feature flags
+- [ ] External API keys
+
+**Rationale**: Missing environment variables cause runtime failures that only appear when specific features are used.
+
+---
+
+## Rule 18: Python Version Compatibility in Docker (MAJOR)
+
+**When creating Docker images for Python projects, the assistant MUST:**
+1. Use stable Python versions (3.11, 3.12), NOT bleeding-edge (3.14+)
+2. Match Python version to package compatibility requirements
+3. Test package installation in Docker BEFORE claiming success
+
+### Evidence from Chat Log
+
+**Problem:**
+- Host system: Python 3.14 (too new)
+- Packages failing: `psycopg2-binary`, `Pillow==10.1.0`, `gevent==23.9.1`
+- Errors: Missing build dependencies, Cython compilation failures
+
+**Solution:**
+```dockerfile
+# WRONG - Uses latest Python (may be 3.14+)
+FROM python:latest
+
+# RIGHT - Uses stable Python 3.11
+FROM python:3.11-slim
+```
+
+**Packages that worked in Python 3.11 Docker:**
+- ✅ psycopg2-binary==2.9.9
+- ✅ Pillow==10.1.0
+- ✅ gevent==23.9.1
+- ✅ pandas==2.1.4
+- ✅ All 28 packages installed successfully
+
+### Required Workflow
+
+```
+1. Check package compatibility with Python version
+2. Use Python 3.11 or 3.12 in Dockerfile (not 3.14+)
+3. Build Docker image and verify ALL packages install
+4. Show build output as evidence
+```
+
+**Rationale**: Bleeding-edge Python versions break packages. Docker should use stable versions.
+
+---
+
+## Rule 19: Database Technology Alignment (MAJOR)
+
+**When choosing database technology, the assistant MUST:**
+1. Check if existing code depends on specific database features
+2. Ask user before switching database types (PostgreSQL ↔ SQLite ↔ MySQL)
+3. Preserve SQL export functionality if it exists
+
+### Evidence from Chat Log
+
+**User requirement:**
+> "use SQL because we already have code in the repo that exports sql"
+
+**Implication:**
+- User has SQL export functionality in codebase
+- Switching to SQLite would break SQL export features
+- PostgreSQL required for production-grade SQL operations
+
+**Assistant's initial mistake:**
+- Commented out `psycopg2-binary` to avoid Python 3.14 issues
+- Changed default to SQLite
+- Would have broken SQL export functionality
+
+**Correct solution:**
+- Use Docker with Python 3.11
+- Keep PostgreSQL with `psycopg2-binary`
+- Preserve all SQL export features
+
+### Required Workflow
+
+```
+BEFORE changing database technology:
+1. Search codebase for SQL export code
+2. Check for PostgreSQL-specific features (JSONB, arrays, full-text search)
+3. Ask user: "I see SQL export code. Should I keep PostgreSQL?"
+4. Only switch to SQLite if user explicitly approves
+```
+
+**Rationale**: Database changes can break existing features. Always verify before switching.
+
+---
+
+## Rule 20: Feature Preservation Verification (CRITICAL)
+
+**When user says "without removing any features", the assistant MUST:**
+1. List ALL features before making changes
+2. Verify each feature still works after changes
+3. Provide evidence that features are preserved
+
+### Evidence from Chat Log
+
+**User constraint:**
+> "without removing any features, proceed"
+
+**Features that needed preservation:**
+- ✅ 28 API endpoints (auth, listings, templates, ocr, export)
+- ✅ PostgreSQL database (for SQL export)
+- ✅ Redis caching and rate limiting
+- ✅ JWT authentication
+- ✅ Multi-format export (CSV, JSON, XLSX, SQL, text)
+- ✅ OCR functionality (Tesseract, Pillow, pytesseract)
+- ✅ All database models (User, Listing, Template, OCRScan, AuditLog)
+
+**Evidence provided:**
+```bash
+# API endpoints preserved
+$ curl http://localhost:5000/
+{
+  "endpoints": {
+    "auth": "/api/auth",
+    "export": "/api/export",
+    "listings": "/api/listings",
+    "ocr": "/api/ocr",
+    "templates": "/api/templates"
+  }
+}
+
+# All packages installed
+psycopg2-binary==2.9.9 ✅
+pytesseract==0.3.10 ✅
+pandas==2.1.4 ✅
+```
+
+### Required Workflow
+
+```
+WHEN user says "without removing any features":
+1. List all current features (API endpoints, packages, functionality)
+2. Make changes
+3. Verify EACH feature still works
+4. Provide evidence (curl output, package list, test results)
+5. Create summary document showing feature preservation
+```
+
+**Rationale**: "Without removing features" is a hard constraint. Verification is mandatory.
+
+---
+
+## Rule 21: Task Completion Evidence Requirements (CRITICAL)
+
+**When user says "when done, explain with evidence", the assistant MUST:**
+1. Create a comprehensive evidence document
+2. Show terminal output for ALL claims
+3. Map each requirement to specific evidence
+4. Test all services and show results
+
+### Evidence from Chat Log
+
+**User requirement:**
+> "then with evidence, when done, explain what I asked and what was done
+> and show with evidence how it complies with the request"
+
+**Evidence provided:**
+1. **Docker containers running:**
+   ```bash
+   $ docker ps --filter "name=marketplace-"
+   marketplace-backend    Up 3 minutes    0.0.0.0:5000->5000/tcp
+   marketplace-frontend   Up 30 minutes   0.0.0.0:5173->5173/tcp
+   marketplace-postgres   Up 30 minutes   0.0.0.0:5432->5432/tcp
+   marketplace-redis      Up 30 minutes   0.0.0.0:6379->6379/tcp
+   ```
+
+2. **Backend startup logs:**
+   ```
+   ✓ PostgreSQL is ready
+   ✓ Redis is ready
+   ✓ Database tables created successfully
+   * Running on http://0.0.0.0:5000
+   ```
+
+3. **API endpoint test:**
+   ```bash
+   $ curl http://localhost:5000/
+   {"status": "running", "version": "1.0.0"}
+   ```
+
+4. **Frontend accessible:**
+   ```bash
+   $ curl http://localhost:5173/
+   <!doctype html>
+   <title>marketplace-bulk-editor</title>
+   ```
+
+5. **Documentation created:**
+   - DOCKER_DEPLOYMENT_EVIDENCE.md
+   - DOCKER_SETUP.md
+   - docker-start.sh
+   - docker-stop.sh
+
+### Required Format
+
+```markdown
+# Evidence Document
+
+## What Was Requested
+1. [Requirement 1]
+2. [Requirement 2]
+
+## What Was Done
+1. [Action 1]
+2. [Action 2]
+
+## Evidence of Compliance
+
+### ✅ Requirement 1
+**Evidence:**
+[Terminal output, curl results, screenshots]
+
+### ✅ Requirement 2
+**Evidence:**
+[Terminal output, curl results, screenshots]
+
+## Summary
+✅ All requirements met with evidence
+```
+
+**Rationale**: "Explain with evidence" means comprehensive documentation, not just verbal claims.
+
+---
+
+## Rule 22: Complete Workflow Testing with Selenium (CRITICAL)
+
+**When testing features with Selenium, the assistant MUST:**
+1. Test the COMPLETE workflow, not just initial page load
+2. Progress through ALL screens needed to demonstrate the feature
+3. Take screenshots at EACH step of the workflow
+4. Show actual usage, not just that the page loads
+
+### Evidence from Chat Log
+
+**User complaint:**
+> "you only progressed to the first screen and did not show how to use the redis or backend, not how to git clone or ./docker-start.sh or anything"
+
+**What was wrong:**
+- Test only loaded http://localhost:5173 and took screenshots
+- Did NOT demonstrate:
+  - How to clone the repository
+  - How to run `./docker-start.sh`
+  - How to register a user
+  - How to login
+  - How to create a listing
+  - How to use templates
+  - How to upload for OCR
+  - How to export data
+  - How Redis rate limiting works
+  - How backend API endpoints work
+
+**What should have been done:**
+1. **Setup workflow**:
+   - Show `git clone` command
+   - Show `./docker-start.sh` execution
+   - Screenshot: All 4 containers running
+   - Screenshot: Backend logs showing "PostgreSQL is ready"
+   - Screenshot: Frontend accessible
+
+2. **User registration workflow**:
+   - Screenshot: Registration form
+   - Execute: `curl -X POST http://localhost:5000/api/auth/register`
+   - Screenshot: Response with access_token and refresh_token
+   - Verify: Token expiration times (15 min access, 7 days refresh)
+
+3. **Login workflow**:
+   - Screenshot: Login form
+   - Execute: `curl -X POST http://localhost:5000/api/auth/login`
+   - Screenshot: Response with tokens
+   - Test: Failed login (show account lockout after 5 attempts)
+
+4. **Create listing workflow**:
+   - Screenshot: Empty data table
+   - Execute: `curl -X POST http://localhost:5000/api/listings` with token
+   - Screenshot: Listing appears in table
+   - Verify: Data persisted in PostgreSQL
+
+5. **Template workflow**:
+   - Screenshot: Template creation form
+   - Execute: `curl -X POST http://localhost:5000/api/templates`
+   - Screenshot: Template saved
+   - Execute: Apply template to new listing
+   - Screenshot: Listing created from template
+
+6. **OCR workflow**:
+   - Screenshot: File upload area
+   - Execute: `curl -X POST http://localhost:5000/api/ocr/upload -F "file=@catalog.pdf"`
+   - Screenshot: OCR processing status
+   - Screenshot: Extracted text results
+   - Verify: Data stored in ocr_scans table
+
+7. **Export workflow**:
+   - Screenshot: Export button dropdown
+   - Execute: `curl -X POST http://localhost:5000/api/export/sql`
+   - Screenshot: Downloaded SQL file
+   - Verify: SQL INSERT statements correct
+
+8. **Redis rate limiting workflow**:
+   - Execute: 101 requests in 1 minute
+   - Screenshot: 429 Too Many Requests error
+   - Execute: `docker exec marketplace-redis redis-cli KEYS "*"`
+   - Screenshot: Rate limit keys in Redis
+   - Verify: Counter resets after 1 minute
+
+9. **Database verification workflow**:
+   - Execute: `docker exec marketplace-postgres psql -U marketplace_user -d marketplace_db -c "SELECT * FROM users;"`
+   - Screenshot: User data in database
+   - Execute: `SELECT * FROM listings;`
+   - Screenshot: Listing data persisted
+   - Verify: Data survives container restart
+
+10. **Stop and restart workflow**:
+    - Execute: `./docker-stop.sh`
+    - Screenshot: All containers stopped
+    - Execute: `./docker-start.sh`
+    - Screenshot: All containers restarted
+    - Verify: Data still exists (volumes preserved)
+
+### Required Workflow Testing Pattern
+
+```python
+# WRONG - Only tests initial load
+def test_feature():
+    driver.get("http://localhost:5173")
+    take_screenshot("loaded")
+    # STOPS HERE - NO ACTUAL USAGE SHOWN
+
+# RIGHT - Tests complete workflow
+def test_feature():
+    # Step 1: Setup
+    take_screenshot("01_before_setup")
+    run_command("./docker-start.sh")
+    take_screenshot("02_containers_running")
+
+    # Step 2: Register user
+    driver.get("http://localhost:5173")
+    take_screenshot("03_registration_form")
+    response = register_user("test@example.com", "SecurePass123!")
+    take_screenshot("04_registration_success")
+    verify_token_expiration(response['access_token'])  # 15 min
+
+    # Step 3: Create listing
+    take_screenshot("05_empty_table")
+    listing = create_listing(token, {"title": "Solar Panel", "price": 150})
+    take_screenshot("06_listing_created")
+
+    # Step 4: Verify in database
+    db_result = query_database("SELECT * FROM listings WHERE id = ?", listing['id'])
+    take_screenshot("07_database_verification")
+
+    # Step 5: Export to SQL
+    take_screenshot("08_export_button")
+    sql_file = export_to_sql(token, [listing])
+    take_screenshot("09_sql_file_downloaded")
+    verify_sql_content(sql_file)  # Check INSERT statements
+
+    # Step 6: Test rate limiting
+    take_screenshot("10_before_rate_limit")
+    for i in range(101):
+        make_request()
+    take_screenshot("11_rate_limit_exceeded")  # Should show 429 error
+
+    # Step 7: Verify Redis
+    redis_keys = run_command("docker exec marketplace-redis redis-cli KEYS '*'")
+    take_screenshot("12_redis_keys")
+
+    # Step 8: Cleanup
+    run_command("./docker-stop.sh")
+    take_screenshot("13_containers_stopped")
+```
+
+### Minimum Screenshots Required
+
+**For backend/database features:**
+- [ ] Setup: `./docker-start.sh` output
+- [ ] Containers: `docker ps` showing all 4 running
+- [ ] Backend logs: PostgreSQL/Redis ready messages
+- [ ] API root: `curl http://localhost:5000/` response
+- [ ] Health check: `curl http://localhost:5000/health` response
+- [ ] User registration: Request + response with tokens
+- [ ] User login: Request + response
+- [ ] Create listing: Request + response
+- [ ] Database query: `psql` output showing data
+- [ ] Redis keys: `redis-cli KEYS *` output
+- [ ] Rate limiting: 429 error after exceeding limit
+- [ ] Export: Downloaded file content
+- [ ] Cleanup: `./docker-stop.sh` output
+
+**For UI features:**
+- [ ] Initial load
+- [ ] Backend status indicator (connected)
+- [ ] Backend status expanded (showing endpoints)
+- [ ] File upload area
+- [ ] Data table with listings
+- [ ] Edit cell (before/after)
+- [ ] Export preview modal
+- [ ] Dark mode toggle (before/after)
+- [ ] Search/filter (before/after)
+- [ ] Bulk actions (selection + result)
+
+### Required Format
+
+```markdown
+# Feature Test Evidence
+
+## Setup
+**Command**: `./docker-start.sh`
+**Screenshot**: screenshot_01_docker_start.png
+**Output**:
+```
+✓ PostgreSQL is healthy
+✓ Redis is healthy
+✓ Backend started
+✓ Frontend started
+```
+
+## User Registration
+**Command**: `curl -X POST http://localhost:5000/api/auth/register -d '...'`
+**Screenshot**: screenshot_02_register.png
+**Response**:
+```json
+{
+  "access_token": "eyJ0eXAi...",
+  "refresh_token": "eyJ0eXAi...",
+  "user": {"id": "...", "email": "test@example.com"}
+}
+```
+**Verified**: Access token expires in 15 minutes ✅
+
+## Create Listing
+**Command**: `curl -X POST http://localhost:5000/api/listings -H "Authorization: Bearer ..." -d '...'`
+**Screenshot**: screenshot_03_create_listing.png
+**Response**:
+```json
+{
+  "listing": {"id": "...", "title": "Solar Panel", "price": 150}
+}
+```
+
+## Database Verification
+**Command**: `docker exec marketplace-postgres psql -U marketplace_user -d marketplace_db -c "SELECT * FROM listings;"`
+**Screenshot**: screenshot_04_database.png
+**Output**:
+```
+ id | title        | price | ...
+----+--------------+-------+-----
+  1 | Solar Panel  | 150   | ...
+```
+**Verified**: Data persisted in PostgreSQL ✅
+
+[... continue for ALL workflow steps ...]
+```
+
+### Rationale
+
+**Why this rule is critical:**
+1. **User complaint**: "you only progressed to the first screen"
+2. **Incomplete testing**: Loading a page ≠ demonstrating functionality
+3. **Missing evidence**: No proof that features actually work
+4. **Documentation failure**: READMEs updated without verifying claims
+5. **Workflow gaps**: Didn't show setup, usage, or verification steps
+
+**Complete workflow testing ensures:**
+- ✅ Features actually work end-to-end
+- ✅ Documentation is accurate
+- ✅ Users can follow the steps
+- ✅ Edge cases are tested (rate limiting, errors, etc.)
+- ✅ Data persistence is verified
+- ✅ All components integrate correctly
+
+**This rule prevents:**
+- ❌ Superficial testing (just loading pages)
+- ❌ Unverified documentation claims
+- ❌ Missing critical steps in user guides
+- ❌ Incomplete feature demonstrations
+
+---
+

@@ -6,6 +6,75 @@ A professional-grade web application for editing and combining Facebook Marketpl
 
 ---
 
+## 🐳 NEW: Full-Stack Docker Deployment Available!
+
+**The improvement plan has been IMPLEMENTED!** This app now includes:
+
+- ✅ **Secure Backend** (Flask + PostgreSQL + JWT auth)
+- ✅ **Multi-Format Export** (Text, CSV, XLSX, JSON, SQL)
+- ✅ **OCR Integration** (Convert scanned catalogs to listings)
+- ✅ **Data Persistence** (PostgreSQL database)
+- ✅ **RESTful API** (28 endpoints across 6 groups)
+- ✅ **Redis Caching** (Rate limiting + performance)
+- ✅ **Docker Deployment** (4-container architecture)
+- ✅ **Backend Status Indicator** (Real-time connection monitoring)
+
+### 🚀 Quick Start (Docker)
+
+```bash
+# Start all services (PostgreSQL, Redis, Backend, Frontend)
+./docker-start.sh
+
+# Access the app
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:5000
+
+# Stop all services
+./docker-stop.sh
+```
+
+**✅ VERIFIED**: All services tested with Selenium + OCR verification (see [COMPLETE_WORKFLOW_EVIDENCE.md](./COMPLETE_WORKFLOW_EVIDENCE.md))
+
+### 🎯 Complete Workflow (Tested End-to-End)
+
+1. **Setup**: `./docker-start.sh` → 4 containers running (PostgreSQL, Redis, Backend, Frontend)
+2. **Register**: `POST /api/auth/register` → JWT tokens issued (15 min access, 7 day refresh)
+3. **Create Listing**: `POST /api/listings` → Saved to PostgreSQL
+4. **Create Template**: `POST /api/templates` → Reusable configuration saved
+5. **Export to SQL**: `POST /api/export/sql` → INSERT statements generated
+6. **Rate Limiting**: 101 requests → 429 error (100/min limit enforced)
+7. **Frontend UI**: Backend status indicator, file upload, dark mode, data table
+8. **Selenium Testing**: 8 screenshots in VISIBLE mode (NOT headless)
+
+**See [COMPLETE_WORKFLOW_EVIDENCE.md](./COMPLETE_WORKFLOW_EVIDENCE.md) for full terminal output, API responses, database queries, and screenshots.**
+
+### 📊 What You Get
+
+| Feature | Frontend Only | With Docker Backend |
+|---------|--------------|---------------------|
+| **Data Storage** | ❌ Browser only (lost on refresh) | ✅ PostgreSQL (permanent) |
+| **Authentication** | ❌ None | ✅ JWT tokens (15 min access, 7 day refresh) |
+| **OCR Processing** | ❌ None | ✅ Tesseract OCR |
+| **SQL Export** | ❌ None | ✅ Full SQL INSERT statements |
+| **Templates** | ❌ None | ✅ Save/reuse configurations |
+| **Rate Limiting** | ❌ None | ✅ Redis-backed (100/min general, 10/min uploads, 50/hour exports) |
+| **Audit Logs** | ❌ None | ✅ Full compliance tracking |
+| **Multi-User** | ❌ Single user | ✅ Multiple users with accounts |
+
+### 📚 Documentation
+
+- **[COMPLETE_WORKFLOW_EVIDENCE.md](./COMPLETE_WORKFLOW_EVIDENCE.md)** - ⭐ **NEW**: Complete end-to-end workflow testing (Rule 22 compliance)
+- **[HOW_TO_USE_DOCKER_BACKEND.md](./HOW_TO_USE_DOCKER_BACKEND.md)** - Complete user guide (583 lines)
+- **[DOCKER_QUICK_REFERENCE.md](./DOCKER_QUICK_REFERENCE.md)** - Quick reference card (print this!)
+- **[DOCKER_BACKEND_EXPLANATION.md](./DOCKER_BACKEND_EXPLANATION.md)** - Architecture overview
+- **[DOCKER_SETUP.md](./DOCKER_SETUP.md)** - Technical setup guide
+- **[DOCKER_DEPLOYMENT_EVIDENCE.md](./DOCKER_DEPLOYMENT_EVIDENCE.md)** - Deployment verification
+- **[SELENIUM_TEST_EVIDENCE.md](./SELENIUM_TEST_EVIDENCE.md)** - UI testing with screenshots
+- **[README_IMPROVEMENTS.md](./README_IMPROVEMENTS.md)** - Implementation overview
+- **[IMPROVEMENT_PLAN.md](./IMPROVEMENT_PLAN.md)** - Original plan (1,175 lines)
+
+---
+
 ## ⚠️ IMPORTANT LEGAL DISCLAIMER
 
 **This software is NOT affiliated with, maintained, authorized, endorsed, or sponsored by Meta Platforms, Inc. or Facebook, Inc.**
@@ -693,6 +762,52 @@ const filteredData = data.filter(listing => {
 
 ### Local Development
 
+#### Option 1: Docker Deployment (RECOMMENDED)
+
+**Full-stack deployment with backend, database, and caching:**
+
+**Prerequisites:**
+- Docker installed and running
+
+**Setup:**
+```bash
+# Clone the repository
+git clone https://github.com/swipswaps/marketplace-bulk-editor.git
+cd marketplace-bulk-editor
+
+# Start all services (PostgreSQL, Redis, Backend, Frontend)
+./docker-start.sh
+
+# Access the application
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:5000
+# PostgreSQL: localhost:5432
+# Redis: localhost:6379
+
+# View logs
+docker logs marketplace-backend -f
+docker logs marketplace-frontend -f
+
+# Stop all services
+./docker-stop.sh
+```
+
+**What's included:**
+- ✅ PostgreSQL database (persistent storage)
+- ✅ Redis cache (rate limiting + performance)
+- ✅ Flask backend (28 API endpoints)
+- ✅ React frontend (Vite dev server)
+- ✅ OCR functionality (Tesseract)
+- ✅ Multi-format export (CSV, JSON, XLSX, SQL, text)
+
+**See**: [DOCKER_SETUP.md](./DOCKER_SETUP.md) for detailed documentation
+
+---
+
+#### Option 2: Frontend Only (Simple)
+
+**Frontend-only development without backend features:**
+
 **Prerequisites:**
 - Node.js 18+ and npm
 
@@ -711,6 +826,8 @@ npm install
 # Or manually (not recommended - can leave orphaned processes)
 npm run dev
 ```
+
+**Note**: This mode runs only the frontend. Backend features (database, OCR, API) will not be available.
 
 ### Development Scripts
 

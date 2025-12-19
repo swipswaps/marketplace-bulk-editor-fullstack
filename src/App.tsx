@@ -3,6 +3,7 @@ import { FileUpload } from './components/FileUpload';
 import { DataTable } from './components/DataTable';
 import { ExportButton } from './components/ExportButton';
 import { SettingsModal } from './components/SettingsModal';
+import { BackendStatus } from './components/BackendStatus';
 import { Settings } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
@@ -148,17 +149,25 @@ function App() {
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 dark:bg-blue-500 p-2 rounded-lg text-white">
-              <FileSpreadsheet size={20} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Logo and Title */}
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 dark:bg-blue-500 p-2 rounded-lg text-white">
+                <FileSpreadsheet size={20} />
+              </div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                Marketplace Bulk Editor
+              </h1>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-              Marketplace Bulk Editor
-            </h1>
-          </div>
 
-          <div className="flex items-center gap-3">
+            {/* Center: Backend Status */}
+            <div className="flex-1 max-w-md">
+              <BackendStatus />
+            </div>
+
+            {/* Right: Controls */}
+            <div className="flex items-center gap-3">
             {/* Undo/Redo Buttons */}
             <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
               <button
@@ -212,6 +221,7 @@ function App() {
                 />
               </>
             )}
+            </div>
           </div>
         </div>
       </header>
