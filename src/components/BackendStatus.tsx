@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Server, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 
 interface BackendStatusProps {
   className?: string;

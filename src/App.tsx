@@ -4,14 +4,22 @@ import { DataTable } from './components/DataTable';
 import { ExportButton } from './components/ExportButton';
 import { SettingsModal } from './components/SettingsModal';
 import { BackendStatus } from './components/BackendStatus';
+import { AuthModal } from './components/AuthModal';
+import { UserMenu } from './components/UserMenu';
+import { SyncStatus } from './components/SyncStatus';
 import { Settings } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
+import { useAuth } from './contexts/AuthContext';
+import { useData } from './contexts/DataContext';
 
 type SortField = keyof MarketplaceListing | null;
 type SortDirection = 'asc' | 'desc' | null;
 
 function App() {
+  const { isAuthenticated } = useAuth();
+  const { listings: dataListings, setListings: setDataListings } = useData();
+
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -24,6 +32,7 @@ function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [exportPreviewContent, setExportPreviewContent] = useState<React.ReactNode | null>(null);
   const [hasUploadedFile, setHasUploadedFile] = useState(() => {
     return localStorage.getItem('hasUploadedFile') === 'true';
@@ -32,6 +41,21 @@ function App() {
   // Undo/Redo state
   const [history, setHistory] = useState<MarketplaceListing[][]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
+
+  // Sync local listings with DataContext
+  useEffect(() => {
+    if (dataListings.length > 0 && listings.length === 0) {
+      // Load from DataContext on mount
+      setListings(dataListings);
+    }
+  }, [dataListings, listings.length]);
+
+  // Update DataContext when listings change
+  useEffect(() => {
+    if (listings.length > 0) {
+      setDataListings(listings);
+    }
+  }, [listings, setDataListings]);
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -161,13 +185,17 @@ function App() {
               </h1>
             </div>
 
-            {/* Center: Backend Status */}
-            <div className="flex-1 max-w-md">
+            {/* Center: Backend Status and Sync Status */}
+            <div className="flex-1 max-w-2xl flex items-center gap-4">
               <BackendStatus />
+              {isAuthenticated && <SyncStatus />}
             </div>
 
             {/* Right: Controls */}
             <div className="flex items-center gap-3">
+            {/* User Menu */}
+            <UserMenu onLoginClick={() => setShowAuthModal(true)} />
+
             {/* Undo/Redo Buttons */}
             <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
               <button
@@ -232,6 +260,12 @@ function App() {
         onClose={() => setShowSettings(false)}
         darkMode={darkMode}
         onDarkModeToggle={() => setDarkMode(!darkMode)}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
 
       {/* Main Content */}
