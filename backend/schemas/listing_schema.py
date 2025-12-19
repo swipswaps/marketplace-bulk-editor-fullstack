@@ -18,7 +18,7 @@ class ListingSchema(Schema):
     offer_shipping = fields.Str(allow_none=True, validate=validate.OneOf(['Yes', 'No']))
     source = fields.Str(dump_only=True)
     ocr_scan_id = fields.Str(allow_none=True)
-    metadata = fields.Dict(allow_none=True)
+    extra_data = fields.Dict(allow_none=True)  # Renamed from metadata to avoid SQLAlchemy conflict (Rule 16)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
     
@@ -41,7 +41,7 @@ class ListingCreateSchema(Schema):
     offer_shipping = fields.Str(allow_none=True, validate=validate.OneOf(['Yes', 'No']))
     source = fields.Str(allow_none=True, validate=validate.OneOf(['manual', 'ocr', 'import']))
     ocr_scan_id = fields.Str(allow_none=True)
-    metadata = fields.Dict(allow_none=True)
+    extra_data = fields.Dict(allow_none=True)  # Renamed from metadata to avoid SQLAlchemy conflict (Rule 16)
     
     @validates('price')
     def validate_price(self, value):
@@ -60,7 +60,7 @@ class ListingUpdateSchema(Schema):
     description = fields.Str(allow_none=True)
     category = fields.Str(allow_none=True, validate=validate.Length(max=100))
     offer_shipping = fields.Str(allow_none=True, validate=validate.OneOf(['Yes', 'No']))
-    metadata = fields.Dict(allow_none=True)
+    extra_data = fields.Dict(allow_none=True)  # Renamed from metadata to avoid SQLAlchemy conflict (Rule 16)
     
     @validates('price')
     def validate_price(self, value):
