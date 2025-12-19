@@ -23,6 +23,7 @@ function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [exportPreviewContent, setExportPreviewContent] = useState<React.ReactNode | null>(null);
   const [hasUploadedFile, setHasUploadedFile] = useState(() => {
     return localStorage.getItem('hasUploadedFile') === 'true';
   });
@@ -202,7 +203,13 @@ function App() {
                   <Trash2 size={16} />
                   Clear All
                 </button>
-                <ExportButton data={listings} sortField={sortField} sortDirection={sortDirection} template={template} />
+                <ExportButton
+                  data={listings}
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  template={template}
+                  onPreviewRender={setExportPreviewContent}
+                />
               </>
             )}
           </div>
@@ -246,20 +253,25 @@ function App() {
                 />
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                <div className="p-6">
-                  <DataTable
-                    data={listings}
-                    onUpdate={updateListingsWithHistory}
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    onSortChange={(field, direction) => {
-                      setSortField(field);
-                      setSortDirection(direction);
-                    }}
-                  />
+              {/* Show export preview if active, otherwise show DataTable */}
+              {exportPreviewContent ? (
+                exportPreviewContent
+              ) : (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                  <div className="p-6">
+                    <DataTable
+                      data={listings}
+                      onUpdate={updateListingsWithHistory}
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSortChange={(field, direction) => {
+                        setSortField(field);
+                        setSortDirection(direction);
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             /* Empty State with integrated upload */
