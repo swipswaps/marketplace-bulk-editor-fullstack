@@ -16,9 +16,10 @@ interface DataContextType {
   syncStatus: SyncStatus;
   lastSyncTime: Date | null;
   error: string | null;
+  isSyncing: boolean;
   setListings: (listings: MarketplaceListing[]) => void;
-  saveToDatabase: () => Promise<void>;
-  loadFromDatabase: () => Promise<void>;
+  saveToDatabase: (listingsToSave: MarketplaceListing[]) => Promise<void>;
+  loadFromDatabase: () => Promise<MarketplaceListing[]>;
   syncWithDatabase: () => Promise<void>;
   clearError: () => void;
 }
@@ -61,7 +62,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  const saveToDatabase = async () => {
+  const saveToDatabase = async (listingsToSave: MarketplaceListing[]) => {
     if (!isAuthenticated) {
       setError('Please login to save to database');
       return;
@@ -71,8 +72,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
+      // Transform frontend format (UPPERCASE) to backend format (lowercase)
+      const backendListings = listingsToSave.map(listing => ({
+        title: listing.TITLE,
+        price: listing.PRICE.toString(),
+        condition: listing.CONDITION,
+        description: listing.DESCRIPTION || '',
+        category: listing.CATEGORY || '',
+        offer_shipping: listing['OFFER SHIPPING'] || 'No',
+        source: 'manual',
+      }));
+
       // Send all listings to backend
-      await apiClient.post('/api/listings/bulk', { listings });
+      await apiClient.post('/api/listings/bulk', { listings: backendListings });
       setSyncStatus('synced');
       setLastSyncTime(new Date());
     } catch (err) {
@@ -83,30 +95,58 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loadFromDatabase = async () => {
+  const loadFromDatabase = async (): Promise<MarketplaceListing[]> => {
     if (!isAuthenticated) {
       setError('Please login to load from database');
-      return;
+      return [];
     }
 
     setSyncStatus('syncing');
     setError(null);
 
     try {
-      const response = await apiClient.get<{ listings: MarketplaceListing[] }>('/api/listings');
-      const dbListings = response.listings;
+      // Backend returns lowercase field names, need to transform to frontend format
+      interface BackendListing {
+        id: string;
+        title: string;
+        price: string;
+        condition: string;
+        description?: string;
+        category?: string;
+        offer_shipping?: string;
+      }
+
+      const response = await apiClient.get<{ listings: BackendListing[] }>('/api/listings');
+
+      // Transform backend format (lowercase) to frontend format (UPPERCASE)
+      const dbListings: MarketplaceListing[] = response.listings.map(listing => ({
+        id: listing.id,
+        TITLE: listing.title,
+        PRICE: parseFloat(listing.price),
+        CONDITION: listing.condition,
+        DESCRIPTION: listing.description || '',
+        CATEGORY: listing.category || '',
+        'OFFER SHIPPING': listing.offer_shipping || 'No',
+      }));
 
       // Check for conflicts with local data
       if (listings.length > 0 && dbListings.length > 0) {
         // For now, merge both (keep all unique listings)
         const merged = mergeListings(listings, dbListings);
         setListings(merged);
+        setSyncStatus('synced');
+        setLastSyncTime(new Date());
+        return merged;
       } else if (dbListings.length > 0) {
         setListings(dbListings);
+        setSyncStatus('synced');
+        setLastSyncTime(new Date());
+        return dbListings;
       }
 
       setSyncStatus('synced');
       setLastSyncTime(new Date());
+      return [];
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError.message || 'Failed to load from database');
@@ -150,6 +190,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     syncStatus,
     lastSyncTime,
     error,
+    isSyncing: syncStatus === 'syncing',
     setListings,
     saveToDatabase,
     loadFromDatabase,

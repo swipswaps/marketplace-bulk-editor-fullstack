@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Download, X, AlertTriangle } from 'lucide-react';
+import { Download, X, AlertTriangle, ChevronDown, Database, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { MarketplaceListing, TemplateMetadata } from '../types';
 import { validateListings } from '../utils/validation';
+import { useAuth } from '../contexts/AuthContext';
+import { apiClient } from '../utils/api';
 
 type SortField = keyof MarketplaceListing | null;
 type SortDirection = 'asc' | 'desc' | null;
@@ -16,8 +18,10 @@ interface ExportButtonProps {
 }
 
 export function ExportButton({ data, sortField, sortDirection, template, onPreviewRender }: ExportButtonProps) {
+  const { isAuthenticated } = useAuth();
   const [showPreview, setShowPreview] = useState(false);
   const [reverseOrder, setReverseOrder] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Notify parent when preview state changes
   useEffect(() => {
@@ -43,6 +47,51 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
 
     // Reverse order if checkbox is checked
     return reverseOrder ? sortedData.reverse() : sortedData;
+  };
+
+  const handleExportSQL = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to export to SQL');
+      return;
+    }
+
+    if (data.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    try {
+      const sortedData = getSortedData();
+
+      // Transform to backend format
+      const backendListings = sortedData.map(listing => ({
+        title: listing.TITLE,
+        price: listing.PRICE.toString(),
+        condition: listing.CONDITION,
+        description: listing.DESCRIPTION || '',
+        category: listing.CATEGORY || '',
+        offer_shipping: listing['OFFER SHIPPING'] || 'No',
+      }));
+
+      // Call backend API (returns text/plain SQL)
+      const sqlContent = await apiClient.post<string>('/api/export/sql', { listings: backendListings });
+
+      // Download file
+      const blob = new Blob([sqlContent], { type: 'application/sql' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `marketplace-listings-${Date.now()}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('SQL export failed:', error);
+      alert('Failed to export to SQL. Please try again.');
+    }
   };
 
   const handleExport = () => {
@@ -277,13 +326,78 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
   };
 
   return (
-    <button
-      onClick={() => setShowPreview(true)}
-      disabled={data.length === 0}
-      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
-    >
-      <Download size={16} />
-      Export for FB
-    </button>
+    <div className="relative">
+      {/* Main Export Button */}
+      <button
+        onClick={() => setShowPreview(true)}
+        disabled={data.length === 0}
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-l-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+      >
+        <Download size={16} />
+        Export for FB
+      </button>
+
+      {/* Dropdown Toggle */}
+      <button
+        onClick={() => setShowExportMenu(!showExportMenu)}
+        disabled={data.length === 0}
+        className="inline-flex items-center px-2 py-2 text-sm font-medium text-white bg-blue-600 rounded-r-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm border-l border-blue-500"
+      >
+        <ChevronDown size={16} />
+      </button>
+
+      {/* Export Options Dropdown */}
+      {showExportMenu && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setShowExportMenu(false)}
+          />
+
+          {/* Menu */}
+          <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+            <div className="py-1">
+              {/* Excel Export (default) */}
+              <button
+                onClick={() => {
+                  setShowPreview(true);
+                  setShowExportMenu(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <FileSpreadsheet size={18} className="text-green-600 dark:text-green-400" />
+                <div>
+                  <div className="font-medium">Export to Excel</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Facebook Marketplace format</div>
+                </div>
+              </button>
+
+              {/* SQL Export (requires auth) */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleExportSQL}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Database size={18} className="text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <div className="font-medium">Export to SQL</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Database INSERT statements</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Login prompt if not authenticated */}
+              {!isAuthenticated && (
+                <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+                  <Database size={14} className="inline mr-1" />
+                  Login to export to SQL
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

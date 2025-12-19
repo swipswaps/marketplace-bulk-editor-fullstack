@@ -7,7 +7,7 @@ import { BackendStatus } from './components/BackendStatus';
 import { AuthModal } from './components/AuthModal';
 import { UserMenu } from './components/UserMenu';
 import { SyncStatus } from './components/SyncStatus';
-import { Settings } from 'lucide-react';
+import { Settings, Download, Upload } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
@@ -18,7 +18,7 @@ type SortDirection = 'asc' | 'desc' | null;
 
 function App() {
   const { isAuthenticated } = useAuth();
-  const { listings: dataListings, setListings: setDataListings } = useData();
+  const { listings: dataListings, setListings: setDataListings, saveToDatabase, loadFromDatabase, isSyncing } = useData();
 
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [sortField, setSortField] = useState<SortField>(null);
@@ -169,6 +169,43 @@ function App() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [historyIndex, history, handleUndo, handleRedo]);
 
+  // Save to Database handler
+  const handleSaveToDatabase = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to save to database');
+      return;
+    }
+
+    try {
+      await saveToDatabase(listings);
+      alert('✅ Listings saved to database successfully!');
+    } catch (error) {
+      console.error('Failed to save to database:', error);
+      alert('❌ Failed to save to database. Please try again.');
+    }
+  };
+
+  // Load from Database handler
+  const handleLoadFromDatabase = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to load from database');
+      return;
+    }
+
+    try {
+      const loadedListings = await loadFromDatabase();
+      if (loadedListings && loadedListings.length > 0) {
+        updateListingsWithHistory(loadedListings);
+        alert(`✅ Loaded ${loadedListings.length} listings from database!`);
+      } else {
+        alert('No listings found in database');
+      }
+    } catch (error) {
+      console.error('Failed to load from database:', error);
+      alert('❌ Failed to load from database. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
@@ -230,6 +267,30 @@ function App() {
             >
               <Settings size={20} />
             </button>
+
+            {/* Database Buttons (only when authenticated) */}
+            {isAuthenticated && (
+              <>
+                <button
+                  onClick={handleSaveToDatabase}
+                  disabled={isSyncing || listings.length === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  title="Save all listings to database"
+                >
+                  <Upload size={16} />
+                  {isSyncing ? 'Saving...' : 'Save to DB'}
+                </button>
+                <button
+                  onClick={handleLoadFromDatabase}
+                  disabled={isSyncing}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  title="Load listings from database"
+                >
+                  <Download size={16} />
+                  {isSyncing ? 'Loading...' : 'Load from DB'}
+                </button>
+              </>
+            )}
 
             {listings.length > 0 && (
               <>

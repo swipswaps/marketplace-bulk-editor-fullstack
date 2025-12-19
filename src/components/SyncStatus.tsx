@@ -9,7 +9,7 @@ import { Cloud, CloudOff, RefreshCw, Check, AlertCircle } from 'lucide-react';
 
 export function SyncStatus() {
   const { isAuthenticated } = useAuth();
-  const { syncStatus, lastSyncTime, saveToDatabase, loadFromDatabase } = useData();
+  const { syncStatus, lastSyncTime } = useData();
 
   if (!isAuthenticated) {
     return (
@@ -53,32 +53,9 @@ export function SyncStatus() {
   };
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Status indicator */}
-      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-        {getStatusIcon()}
-        <span>{getStatusText()}</span>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={saveToDatabase}
-          disabled={syncStatus === 'syncing'}
-          className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title="Save to database"
-        >
-          Save
-        </button>
-        <button
-          onClick={loadFromDatabase}
-          disabled={syncStatus === 'syncing'}
-          className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title="Load from database"
-        >
-          Load
-        </button>
-      </div>
+    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+      {getStatusIcon()}
+      <span>{getStatusText()}</span>
     </div>
   );
 }
