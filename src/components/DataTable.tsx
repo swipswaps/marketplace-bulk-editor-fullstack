@@ -197,24 +197,62 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
   };
 
   const handleSelectAll = () => {
+    console.log('☑️ Select All checkbox clicked');
+    console.log(`📊 sortedData.length: ${sortedData.length}`);
+    console.log(`📊 selectedRows.size: ${selectedRows.size}`);
+
     if (selectedRows.size === sortedData.length) {
+      console.log('✅ Deselecting all rows');
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(sortedData.map(item => item.id)));
+      const allIds = sortedData.map(item => item.id);
+      console.log(`✅ Selecting all ${allIds.length} rows`);
+      console.log(`📋 IDs: ${allIds.join(', ')}`);
+      setSelectedRows(new Set(allIds));
     }
   };
 
   const handleBulkDelete = () => {
-    if (selectedRows.size === 0) return;
+    console.log('🗑️ Bulk Delete button clicked');
+    console.log(`📊 selectedRows.size: ${selectedRows.size}`);
+    console.log(`📊 data.length: ${data.length}`);
+    console.log(`📊 sortedData.length: ${sortedData.length}`);
+    console.log(`📊 filteredData.length: ${filteredData.length}`);
 
-    if (confirm(`Delete ${selectedRows.size} selected listing(s)?`)) {
+    if (selectedRows.size === 0) {
+      console.log('❌ No rows selected, returning');
+      return;
+    }
+
+    console.log(`📋 Selected IDs: ${Array.from(selectedRows).join(', ')}`);
+
+    // Check positioning of selected rows
+    const selectedArray = Array.from(selectedRows);
+    console.log('📍 Position analysis:');
+    selectedArray.forEach(id => {
+      const dataIndex = data.findIndex(item => item.id === id);
+      const sortedIndex = sortedData.findIndex(item => item.id === id);
+      const filteredIndex = filteredData.findIndex(item => item.id === id);
+      console.log(`   ID ${id}: data[${dataIndex}], sortedData[${sortedIndex}], filteredData[${filteredIndex}]`);
+    });
+
+    const userConfirmed = confirm(`Delete ${selectedRows.size} selected listing(s)?`);
+    console.log(`❓ User confirmed: ${userConfirmed}`);
+
+    if (userConfirmed) {
       const updatedData = data.filter(item => !selectedRows.has(item.id));
+      console.log(`✅ Filtered data: ${data.length} → ${updatedData.length} (deleted ${data.length - updatedData.length})`);
+
       onUpdate(updatedData);
       setSelectedRows(new Set());
 
       // Show save indicator
       setLastSaved(new Date().toLocaleTimeString());
       setTimeout(() => setLastSaved(null), 2000);
+
+      console.log('✅ Bulk delete completed');
+    } else {
+      console.log('❌ Bulk delete cancelled by user');
     }
   };
 
@@ -432,7 +470,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
         <div className="flex items-center gap-4 flex-1">
           <button
             onClick={handleAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm select-text"
           >
             <Plus size={16} />
             Add New Listing
@@ -440,7 +478,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
           <button
             onClick={handleRemoveEmptyRows}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm select-text"
             title="Remove rows with missing required fields (TITLE, PRICE, CONDITION)"
           >
             <Trash2 size={16} />
@@ -450,12 +488,12 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
           {/* Bulk Actions */}
           {selectedRows.size > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium select-text">
                 {selectedRows.size} selected
               </span>
               <button
                 onClick={handleBulkDelete}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors select-text"
               >
                 <Trash2 size={14} />
                 Delete
@@ -500,7 +538,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-text"
                 title="Clear search"
               >
                 <X size={16} />
@@ -512,7 +550,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
           <div className="relative">
             <button
               onClick={() => setShowColumnMenu(!showColumnMenu)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors select-text"
             >
               <Eye size={16} />
               Columns
@@ -640,7 +678,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                           e.stopPropagation();
                           setColumnActionMenu(columnActionMenu === field ? null : field);
                         }}
-                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors select-text"
                         title="Column actions"
                       >
                         <MoreVertical size={14} className="text-gray-500 dark:text-gray-400" />
@@ -654,7 +692,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                             {(field === 'TITLE' || field === 'DESCRIPTION' || field === 'CATEGORY' || field === 'PRICE') && (
                               <button
                                 onClick={() => handleColumnBulkEdit(field, 'all')}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 select-text"
                               >
                                 Edit all rows...
                               </button>
@@ -664,7 +702,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                             {(field === 'TITLE' || field === 'DESCRIPTION' || field === 'CATEGORY' || field === 'PRICE') && (
                               <button
                                 onClick={() => handleColumnBulkEdit(field, 'selected')}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 select-text"
                                 disabled={selectedRows.size === 0}
                               >
                                 Edit selected rows... {selectedRows.size > 0 && `(${selectedRows.size})`}
@@ -679,7 +717,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                             {/* Clear All */}
                             <button
                               onClick={() => handleClearColumn(field, 'all')}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-text"
                             >
                               Clear all values
                             </button>
@@ -687,7 +725,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                             {/* Clear Selected */}
                             <button
                               onClick={() => handleClearColumn(field, 'selected')}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-text"
                               disabled={selectedRows.size === 0}
                             >
                               Clear selected {selectedRows.size > 0 && `(${selectedRows.size})`}
@@ -884,7 +922,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                       )}
                     </div>
                   ) : (
-                    <div className="font-medium">${Number(listing.PRICE).toFixed(2)}</div>
+                    <div className="font-medium">${Number(listing.PRICE || 0).toFixed(2)}</div>
                   )}
                 </td>}
 
@@ -1067,14 +1105,14 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleDuplicate(listing.id)}
-                      className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      className="p-1 text-blue-600 hover:bg-blue-50 rounded select-text"
                       title="Duplicate"
                     >
                       <Copy size={18} />
                     </button>
                     <button
                       onClick={() => handleDelete(listing.id)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      className="p-1 text-red-600 hover:bg-red-50 rounded select-text"
                       title="Delete"
                     >
                       <Trash2 size={18} />
@@ -1149,13 +1187,13 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={handleApplyBulkEdit}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium select-text"
                 >
                   Apply
                 </button>
                 <button
                   onClick={() => setBulkEditModal({ show: false, field: null, scope: 'all', value: '' })}
-                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium select-text"
                 >
                   Cancel
                 </button>
@@ -1169,7 +1207,7 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
       <div className="mt-4 border-t dark:border-gray-700 pt-4">
         <button
           onClick={() => setShowDebugPanel(!showDebugPanel)}
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 select-text"
         >
           {showDebugPanel ? '▼' : '▶'} Debug Logs
         </button>

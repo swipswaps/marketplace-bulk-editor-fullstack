@@ -357,7 +357,7 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
       <button
         onClick={() => setShowPreview(true)}
         disabled={data.length === 0}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-l-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-l-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm select-text"
       >
         <Download size={16} />
         Export for FB
@@ -367,7 +367,7 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
       <button
         onClick={() => setShowExportMenu(!showExportMenu)}
         disabled={data.length === 0}
-        className="inline-flex items-center px-2 py-2 text-sm font-medium text-white bg-blue-600 rounded-r-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm border-l border-blue-500"
+        className="inline-flex items-center px-2 py-2 text-sm font-medium text-white bg-blue-600 rounded-r-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm border-l border-blue-500 select-text"
       >
         <ChevronDown size={16} />
       </button>
@@ -390,7 +390,7 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
                   setShowPreview(true);
                   setShowExportMenu(false);
                 }}
-                className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-text"
               >
                 <FileSpreadsheet size={18} className="text-green-600 dark:text-green-400" />
                 <div>
@@ -403,7 +403,7 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
               {isAuthenticated && (
                 <button
                   onClick={handleExportSQL}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-text"
                 >
                   <Database size={18} className="text-blue-600 dark:text-blue-400" />
                   <div>
@@ -415,7 +415,7 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
 
               {/* Login prompt if not authenticated */}
               {!isAuthenticated && (
-                <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 select-text">
                   <Database size={14} className="inline mr-1" />
                   Login to export to SQL
                 </div>

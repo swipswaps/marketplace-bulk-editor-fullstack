@@ -106,7 +106,7 @@ export function BackendStatus({ className = '' }: BackendStatusProps) {
       <div className={`border rounded-lg p-3 ${getStatusColor()}`}>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between gap-2"
+          className="w-full flex items-center justify-between gap-2 select-text"
         >
           <div className="flex items-center gap-2">
             {getStatusIcon()}

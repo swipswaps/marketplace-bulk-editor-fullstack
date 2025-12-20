@@ -1,10 +1,348 @@
 ---
 type: "always_apply"
-description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, Selenium testing (VISIBLE mode, OCR verification, screenshots in README), complete workflow testing, Docker deployment, ORM safety, feature preservation, use existing browser windows"
-version: "3.3"
+description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, Selenium testing (VISIBLE mode, OCR verification, screenshots in README), complete workflow testing, Docker deployment, ORM safety, feature preservation, use existing browser windows with xdotool, MANDATORY WORKFLOW PATTERN ENFORCEMENT"
+version: "3.5"
 ---
 
-1. Workspace Authority (HARD STOP)
+## Rule 0: Mandatory Workflow Pattern (META-RULE - CRITICAL)
+
+**This is the MOST IMPORTANT rule. All other rules are useless if this pattern is not followed.**
+
+### The Problem
+
+The user has to constantly ask:
+- "Show which rules apply"
+- "Explain your steps"
+- "Provide evidence"
+- "Use OCR to verify"
+- "Why didn't you follow the rules?"
+
+**This should NOT be necessary.** The assistant should self-enforce this pattern automatically.
+
+### The Mandatory Pattern (PER STEP)
+
+**The pattern must be applied TO EACH STEP, not just once at the beginning.**
+
+#### Phase 1: BEFORE Starting - Plan All Steps
+
+```
+## Rules That Apply to This Task
+
+- Rule X: [Rule name] - [Why it applies to overall task]
+- Rule Y: [Rule name] - [Why it applies to overall task]
+
+## Steps I Will Take
+
+Step 1: [Action description]
+Step 2: [Action description]
+Step 3: [Action description]
+```
+
+#### Phase 2: FOR EACH STEP - Execute with Rule Citations
+
+**FOR EACH STEP, the assistant MUST:**
+
+```
+### Step N: [Step description]
+
+**Rules that apply to THIS step:**
+- Rule X: [Why this rule applies to THIS specific step]
+- Rule Y: [Why this rule applies to THIS specific step]
+
+**Command/Action:**
+[exact command or code to execute]
+
+**Executing:**
+[run the command/action]
+
+**Evidence:**
+[paste FULL terminal output or result]
+
+**Rule compliance verification:**
+- Rule X compliance: ✅ [how THIS step satisfies Rule X]
+- Rule Y compliance: ✅ [how THIS step satisfies Rule Y]
+
+---
+```
+
+**THEN move to next step and repeat the pattern.**
+
+#### Phase 3: AFTER All Steps - Final Verification
+
+```
+## Final Verification
+
+All steps completed: ✅
+All rules satisfied: ✅
+Evidence provided for each step: ✅
+OCR verification performed: ✅
+
+Task complete.
+```
+
+### Example of Correct Per-Step Pattern
+
+**User request:** "Fix the $NaN error"
+
+**Phase 1: Planning**
+```
+## Rules That Apply to This Task
+
+- Rule 4: Scope Containment - Fix only the $NaN bug
+- Rule 2: Evidence-Before-Assertion - Must show terminal output and OCR proof
+- Rule 26: Use Existing Browser Window - Test in Firefox window 60842863
+
+## Steps I Will Take
+
+Step 1: Find where PRICE is displayed
+Step 2: Fix the NaN handling
+Step 3: Refresh browser and take screenshot
+Step 4: Run OCR to verify fix
+Step 5: Display screenshot to user
+```
+
+**Phase 2: Execution (Per Step)**
+```
+### Step 1: Find where PRICE is displayed
+
+**Rules that apply to THIS step:**
+- Rule 5: Ask Don't Guess - Must investigate before fixing
+
+**Command:**
+grep -n "PRICE.*toFixed" src/components/DataTable.tsx
+
+**Executing:**
+[run command]
+
+**Evidence:**
+887:  <div className="font-medium">${Number(listing.PRICE).toFixed(2)}</div>
+
+**Rule compliance:**
+- Rule 5 compliance: ✅ Found exact location before making changes
+
+---
+
+### Step 2: Fix the NaN handling
+
+**Rules that apply to THIS step:**
+- Rule 4: Scope Containment - Change only line 887, nothing else
+
+**Command:**
+[edit DataTable.tsx line 887]
+
+**Executing:**
+[make the edit]
+
+**Evidence:**
+Changed: ${Number(listing.PRICE).toFixed(2)}
+To: ${Number(listing.PRICE || 0).toFixed(2)}
+
+**Rule compliance:**
+- Rule 4 compliance: ✅ Changed only the specific line, no refactoring
+
+---
+
+### Step 3: Refresh browser and take screenshot
+
+**Rules that apply to THIS step:**
+- Rule 26: Use Existing Browser Window - Use Firefox window 60842863
+
+**Command:**
+DISPLAY=:0 xdotool windowactivate 60842863 && xdotool key F5
+DISPLAY=:0 import -window root /tmp/after_fix.png
+
+**Executing:**
+[run commands]
+
+**Evidence:**
+✅ Refreshed Firefox
+✅ Screenshot taken
+
+**Rule compliance:**
+- Rule 26 compliance: ✅ Used existing window 60842863, didn't create new browser
+
+---
+
+### Step 4: Run OCR to verify fix
+
+**Rules that apply to THIS step:**
+- Rule 0: Mandatory Workflow Pattern - Must verify with OCR before claiming
+- Rule 2: Evidence-Before-Assertion - Must show full OCR output
+
+**Command:**
+python3 << 'EOF'
+import pytesseract
+from PIL import Image
+img = Image.open('/tmp/after_fix.png')
+text = pytesseract.image_to_string(img)
+print("=== FULL OCR OUTPUT ===")
+print(text)
+if '$NaN' in text:
+    print("❌ BUG STILL EXISTS")
+else:
+    print("✅ NO NaN ERRORS FOUND")
+EOF
+
+**Executing:**
+[run OCR]
+
+**Evidence:**
+=== FULL OCR OUTPUT ===
+a $0.00
+a $0.00
+a $0.00
+o $0.00
+
+✅ NO NaN ERRORS FOUND
+
+**Rule compliance:**
+- Rule 0 compliance: ✅ Ran OCR before claiming fix worked
+- Rule 2 compliance: ✅ Showed full OCR output as evidence
+
+---
+
+### Step 5: Display screenshot to user
+
+**Rules that apply to THIS step:**
+- Rule 26: Use Existing Browser Window - Must show screenshot to user
+
+**Command:**
+open-browser file:///tmp/after_fix.png
+
+**Executing:**
+[open screenshot]
+
+**Evidence:**
+Opened file:///tmp/after_fix.png in browser
+
+**Rule compliance:**
+- Rule 26 compliance: ✅ Screenshot displayed to user
+```
+
+**Phase 3: Final Verification**
+```
+## Final Verification
+
+All steps completed: ✅
+All rules satisfied: ✅
+Evidence provided for each step: ✅
+OCR verification performed: ✅
+
+Bug fixed: $NaN → $0.00
+```
+
+### Forbidden Patterns
+
+❌ **WRONG - Rules stated once at beginning, not per step:**
+```
+## Rules That Apply
+- Rule 2, Rule 4, Rule 26
+
+[executes all steps without citing which rule applies to each]
+```
+
+❌ **WRONG - No evidence after each step:**
+```
+Step 1: Find PRICE display
+Step 2: Fix it
+Step 3: Test it
+[doesn't show terminal output after each step]
+```
+
+❌ **WRONG - No rule compliance verification per step:**
+```
+Step 1: [action]
+Evidence: [output]
+[doesn't verify which rule was satisfied]
+```
+
+❌ **WRONG - Claims without OCR proof:**
+```
+Step 4: Verify fix
+Looking at the screenshot, I can see it's fixed.
+[didn't run OCR to verify]
+```
+
+❌ **WRONG - Bulk execution without per-step pattern:**
+```
+[runs all 5 steps]
+Here's all the evidence:
+[dumps all output at the end]
+```
+
+### Why This Rule Exists
+
+**User complaint that triggered this rule:**
+> "explain why I have to ask this"
+>
+> "What should happen automatically:
+> - I should state applicable rules BEFORE acting
+> - I should show planned steps BEFORE executing
+> - I should provide evidence AFTER each step
+> - I should verify with OCR BEFORE claiming results
+>
+> This is a meta-rule violation - the rules exist but I'm not following the pattern"
+
+**Follow-up clarification:**
+> User: "explain what rules apply as you go through the steps"
+>
+> Assistant: "Should I update Rule 0 to enforce the per-step pattern?"
+>
+> User: "What is the correct answer?"
+>
+> Assistant: "The correct answer is YES. Rule 0 must enforce the pattern PER STEP, not just once at the beginning."
+
+**Root cause:**
+- Rules 1-26 exist but assistant doesn't follow the **workflow pattern**
+- Assistant states rules once at the beginning, then executes all steps in bulk
+- Evidence is disconnected from the actions it proves
+- User can't trace which rule justifies which action
+- User has to constantly police compliance
+- This wastes user's time and breaks trust
+
+**Solution:**
+- Rule 0 enforces the **workflow pattern PER STEP**
+- Every step must follow: State Rules (for this step) → Execute → Evidence → Verify Compliance
+- Pattern must be applied to EACH step, not just once at the beginning
+- No exceptions
+
+### Enforcement
+
+**If the assistant:**
+- Takes action without stating applicable rules
+- Executes without showing planned steps
+- Makes claims without providing evidence
+- Claims to see something without OCR verification
+- Skips any part of the mandatory pattern
+
+**Then the user MUST:**
+- Stop the assistant immediately
+- Cite Rule 0 violation
+- Require the assistant to restart with proper pattern
+
+### Success Criteria
+
+✅ User never has to ask "which rules apply"
+✅ User never has to ask "show your steps"
+✅ User never has to ask "provide evidence"
+✅ User never has to ask "use OCR to verify"
+✅ User never has to ask "explain what rules apply as you go through the steps"
+✅ User can trace each action to its rule justification
+✅ User can verify compliance step-by-step, not just at the end
+✅ User can trust assistant is following rules automatically
+
+**This rule makes all other rules actually work.**
+
+### Key Principle
+
+**The pattern is PER STEP, not per task.**
+
+- ❌ WRONG: State all rules → Execute all steps → Show all evidence
+- ✅ CORRECT: For each step: State rules → Execute → Evidence → Verify compliance
+
+---
+
+## Rule 1: Workspace Authority (HARD STOP)
 
 Before any code, test, build, or deployment discussion, the assistant must declare:
 
@@ -541,3 +879,238 @@ xdotool search --name "Firefox" windowactivate
 - User's time is wasted
 - User's frustration increases
 - Assistant demonstrates it's not listening
+
+---
+
+## Rule 26: Use Existing Browser Window with xdotool (CRITICAL)
+
+**When the user says:**
+- "the page is open in firefox"
+- "page is open in firefox, do not waste time using chrome"
+- "Import more fails" (implies they already tried it)
+- "the button doesn't work" (implies they already clicked it)
+- Any statement indicating they have the app already open
+
+**The assistant MUST:**
+1. **Find the CORRECT Firefox window** (see workflow below)
+2. **Activate that specific window** using its window ID
+3. **Use source code to determine button location** (don't guess)
+4. **Use OCR to find exact coordinates** of UI elements
+5. **Click buttons using xdotool** to trigger actions
+6. **Read errors from Debug Console** (already visible in UI per Rule 25)
+
+**The assistant MUST NOT:**
+- Create new Selenium WebDriver instances
+- Write new test scripts that start from scratch
+- Ask user to manually click buttons
+- Ask user to copy/paste console output (Debug Console already shows it)
+- Ignore that the user has already set up the browser state
+- Use `xdotool search --name "Firefox" windowactivate` without finding the CORRECT window first
+
+**Why This Rule Exists:**
+- User has already spent time setting up browser state (login, data upload, etc.)
+- Creating new browser instances wastes user's time
+- User explicitly stated which browser they're using
+- Debug Console already shows all errors (Rule 25)
+- Source code tells us exactly where buttons are located
+- OCR can find exact pixel coordinates
+- **Multiple Firefox windows may be open - must find the RIGHT one**
+
+**MANDATORY WORKFLOW - Find Correct Firefox Window:**
+
+```bash
+# Step 1: List ALL Firefox windows with their titles
+DISPLAY=:0 xdotool search --name "Firefox" 2>&1 | while read wid; do
+  echo "Window $wid: $(DISPLAY=:0 xdotool getwindowname $wid 2>&1)"
+done
+
+# Output example:
+# Window 60817409: Firefox
+# Window 60838438: Firefox
+# Window 60842863: marketplace-bulk-editor — Mozilla Firefox Private Browsing
+
+# Step 2: Find the window ID that contains "marketplace" or the app name
+# In this example: 60842863
+
+# Step 3: Activate THAT SPECIFIC window
+DISPLAY=:0 xdotool windowactivate 60842863
+
+# Step 4: Wait for window to come into focus
+sleep 1
+
+# Step 5: Verify window is active by taking screenshot
+DISPLAY=:0 import -window root /tmp/firefox_active.png
+
+# Step 6: Use OCR to verify correct window is showing
+python3 << 'EOF'
+import pytesseract
+from PIL import Image
+img = Image.open('/tmp/firefox_active.png')
+text = pytesseract.image_to_string(img)
+if 'Marketplace Bulk Editor' in text:
+    print("✅ Correct Firefox window is active")
+else:
+    print("❌ Wrong window - marketplace app not visible")
+    print(text[:500])
+EOF
+```
+
+**MANDATORY WORKFLOW - Click Button in Active Window:**
+
+```bash
+# Step 1: Firefox window is already active (from above)
+
+# Step 2: Use OCR to find button coordinates
+python3 << 'EOF'
+import pytesseract
+from PIL import Image
+img = Image.open('/tmp/firefox_active.png')
+data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+for i, text in enumerate(data['text']):
+    if 'Import More' in text or 'Import' in text:
+        x = data['left'][i] + data['width'][i]//2
+        y = data['top'][i] + data['height'][i]//2
+        print(f"Found '{text}' at ({x}, {y})")
+EOF
+
+# Step 3: Click the button at those coordinates
+DISPLAY=:0 xdotool mousemove <x> <y> click 1
+
+# Step 4: Wait for action to complete
+sleep 2
+
+# Step 5: Take screenshot of result
+DISPLAY=:0 import -window root /tmp/after_click.png
+
+# Step 6: Use OCR to read Debug Console for errors
+python3 << 'EOF'
+import pytesseract
+from PIL import Image
+img = Image.open('/tmp/after_click.png')
+text = pytesseract.image_to_string(img)
+print("=== SCREEN AFTER CLICK ===")
+print(text)
+EOF
+```
+
+**How to Find Button Location from Source Code:**
+
+1. Search codebase for button text (e.g., "Import More")
+2. Find the component that renders it
+3. Understand the layout structure
+4. Use OCR to locate it on screen
+5. Click using xdotool
+
+**Example:**
+```typescript
+// Source code shows:
+<button className="...">
+  <Upload size={16} />
+  Import More
+</button>
+
+// This tells us:
+// - Button contains text "Import More"
+// - Button has Upload icon
+// - Use OCR to find "Import More" text
+// - Click at those coordinates
+```
+
+**Common Mistakes (FORBIDDEN):**
+
+❌ **WRONG - Activates random Firefox window:**
+```bash
+DISPLAY=:0 xdotool search --name "Firefox" windowactivate
+# This activates the FIRST window found, not the correct one!
+```
+
+❌ **WRONG - Doesn't verify which window is active:**
+```bash
+DISPLAY=:0 xdotool windowactivate 12345
+# Takes screenshot but doesn't check if marketplace app is visible
+```
+
+❌ **WRONG - Takes screenshot but window isn't in focus:**
+```bash
+DISPLAY=:0 import -window root /tmp/screenshot.png
+# Screenshot shows IDE/terminal instead of Firefox
+# User complains: "I am not seeing the target Firefox window come into focus"
+```
+
+✅ **CORRECT - Find specific window, activate it, verify it:**
+```bash
+# 1. List all windows
+DISPLAY=:0 xdotool search --name "Firefox" | while read wid; do
+  echo "$wid: $(DISPLAY=:0 xdotool getwindowname $wid)"
+done
+
+# 2. Find the one with "marketplace" in title
+# Output: 60842863: marketplace-bulk-editor — Mozilla Firefox
+
+# 3. Activate THAT window
+DISPLAY=:0 xdotool windowactivate 60842863
+
+# 4. Wait and verify
+sleep 1
+DISPLAY=:0 import -window root /tmp/verify.png
+python3 -c "import pytesseract; from PIL import Image; print('Marketplace' in pytesseract.image_to_string(Image.open('/tmp/verify.png')))"
+# Output: True (verified!)
+```
+
+**What's Missing from Previous Rules:**
+
+**Rule 23** said "use existing browser" but was marked DEPRECATED and didn't explain HOW to use xdotool effectively.
+
+**The gap was:**
+- ❌ No instruction to LIST all Firefox windows first
+- ❌ No instruction to FIND the correct window by title
+- ❌ No instruction to ACTIVATE the specific window ID
+- ❌ No instruction to VERIFY the window is in focus
+- ❌ No instruction to use source code to find button locations
+- ❌ No instruction to use OCR for exact coordinates
+- ❌ No instruction to click buttons with xdotool
+- ❌ No instruction to read Debug Console for errors (instead of asking user)
+
+**This rule fills that gap by requiring:**
+1. ✅ List ALL Firefox windows with titles
+2. ✅ Find the window ID containing the app name
+3. ✅ Activate THAT SPECIFIC window by ID
+4. ✅ Verify window is in focus with OCR
+5. ✅ Use source code to understand UI structure
+6. ✅ Use OCR to find exact pixel coordinates
+7. ✅ Use xdotool to click buttons
+8. ✅ Read Debug Console automatically (don't ask user)
+9. ✅ Take screenshots before/after to verify actions
+
+**Failure to Comply:**
+
+If the assistant:
+- Uses `xdotool search --name "Firefox" windowactivate` without finding correct window first
+- Doesn't list all Firefox windows to find the right one
+- Doesn't verify the window is in focus before clicking
+- Takes screenshots that show IDE/terminal instead of Firefox
+- Creates new Selenium instance when user said "page is open"
+- Asks user to click buttons manually
+- Asks user to copy/paste console output
+- Ignores user's browser choice (Firefox vs Chrome)
+- Doesn't use source code to find button locations
+
+**Then the user MUST stop the assistant and cite Rule 26.**
+
+**User Complaint That Triggered This Rule:**
+> "again I am not seeing the target Firefox window come into focus - why?"
+
+**Root Cause:**
+- Assistant used `xdotool search --name "Firefox" windowactivate` which activates the FIRST window found
+- Multiple Firefox windows were open (7 windows)
+- The correct window (ID 60842863 with "marketplace-bulk-editor" in title) was NOT the first one
+- Screenshots showed IDE/terminal instead of Firefox
+- Assistant didn't verify which window was active
+
+**Solution:**
+- ALWAYS list all windows first
+- ALWAYS find the correct window by title
+- ALWAYS activate by specific window ID
+- ALWAYS verify with OCR that correct window is showing
+
+---

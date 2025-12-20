@@ -13,7 +13,7 @@ export function SyncStatus() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 select-text">
         <CloudOff size={14} />
         <span>Offline mode (local only)</span>
       </div>
@@ -53,7 +53,7 @@ export function SyncStatus() {
   };
 
   return (
-    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 select-text">
       {getStatusIcon()}
       <span>{getStatusText()}</span>
     </div>

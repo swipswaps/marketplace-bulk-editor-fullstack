@@ -117,8 +117,22 @@ function App() {
   };
 
   const handleClearAll = () => {
-    if (confirm('Are you sure you want to clear all listings?')) {
+    console.log('🗑️ Clear All button clicked');
+    console.log(`📊 Current listings count: ${listings.length}`);
+
+    const userConfirmed = confirm('Are you sure you want to clear all listings?');
+    console.log(`❓ User confirmed: ${userConfirmed}`);
+
+    if (userConfirmed) {
+      console.log('✅ Clearing all listings...');
+
+      // Clear both local state AND DataContext to prevent useEffect from restoring data
       updateListingsWithHistory([]);
+      setDataListings([]);
+
+      console.log('✅ All listings cleared from both local state and DataContext');
+    } else {
+      console.log('❌ Clear All cancelled by user');
     }
   };
 
@@ -136,6 +150,7 @@ function App() {
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
     setListings(newListings);
+    setDataListings(newListings);  // Also update DataContext to prevent restoration
   };
 
   // Undo handler
@@ -221,21 +236,21 @@ function App() {
                 <div className="bg-blue-600 dark:bg-blue-500 p-2 rounded-lg text-white">
                   <FileSpreadsheet size={20} />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight select-text">
                   Marketplace Bulk Editor
                 </h1>
               </div>
 
               {/* Marketplace Selector */}
               <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-4">
-                <label htmlFor="marketplace-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="marketplace-select" className="text-sm font-medium text-gray-700 dark:text-gray-300 select-text">
                   Platform:
                 </label>
                 <select
                   id="marketplace-select"
                   value={marketplace}
                   onChange={(e) => setMarketplace(e.target.value as 'facebook' | 'ebay' | 'amazon')}
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors select-text"
                   title="Select marketplace platform - different platforms use different databases"
                 >
                   <option value="facebook">📘 Facebook Marketplace</option>
@@ -261,7 +276,7 @@ function App() {
               <button
                 onClick={handleUndo}
                 disabled={historyIndex <= 0}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-text"
                 title="Undo (Ctrl+Z)"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -272,7 +287,7 @@ function App() {
               <button
                 onClick={handleRedo}
                 disabled={historyIndex >= history.length - 1}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-text"
                 title="Redo (Ctrl+Y)"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -285,7 +300,7 @@ function App() {
             {/* Settings Button */}
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors select-text"
               title="Settings & Legal Notice"
             >
               <Settings size={20} />
@@ -297,7 +312,7 @@ function App() {
                 <button
                   onClick={handleSaveToDatabase}
                   disabled={isSyncing || listings.length === 0}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm select-text"
                   title={`Save all ${listings.length} listing(s) to ${marketplace.toUpperCase()} database`}
                 >
                   <Upload size={16} />
@@ -306,7 +321,7 @@ function App() {
                 <button
                   onClick={handleLoadFromDatabase}
                   disabled={isSyncing}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm select-text"
                   title={`Load listings from ${marketplace.toUpperCase()} database`}
                 >
                   <Download size={16} />
@@ -315,25 +330,38 @@ function App() {
               </div>
             )}
 
-            {listings.length > 0 && (
-              <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
-                <button
-                  onClick={handleClearAll}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors shadow-sm"
-                  title={`Clear all ${listings.length} listing(s) - this cannot be undone!`}
-                >
-                  <Trash2 size={16} />
-                  Clear All
-                </button>
-                <ExportButton
-                  data={listings}
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  template={template}
-                  onPreviewRender={setExportPreviewContent}
-                />
-              </div>
-            )}
+            {/* Import More / Clear All / Export Buttons */}
+            <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
+              {/* Import More button - always visible */}
+              <FileUpload
+                onDataLoaded={handleDataLoaded}
+                onTemplateDetected={handleTemplateDetected}
+                currentTemplate={template}
+                onTemplateLoad={handleTemplateLoad}
+                compact={true}
+              />
+
+              {/* Clear All and Export - only when data exists */}
+              {listings.length > 0 && (
+                <>
+                  <button
+                    onClick={handleClearAll}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors shadow-sm select-text"
+                    title={`Clear all ${listings.length} listing(s) - this cannot be undone!`}
+                  >
+                    <Trash2 size={16} />
+                    Clear All
+                  </button>
+                  <ExportButton
+                    data={listings}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    template={template}
+                    onPreviewRender={setExportPreviewContent}
+                  />
+                </>
+              )}
+            </div>
             </div>
           </div>
         </div>
@@ -359,29 +387,6 @@ function App() {
           {/* Data Table Section - Show when we have data */}
           {listings.length > 0 ? (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Listings</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {listings.length} {listings.length === 1 ? 'item' : 'items'}
-                    {template && template.columnHeaders.length > 0 && (
-                      <span className="ml-2 text-xs text-green-600 dark:text-green-400">
-                        • Template: {template.sheetName}
-                      </span>
-                    )}
-                  </p>
-                </div>
-
-                {/* Compact upload button when data exists */}
-                <FileUpload
-                  onDataLoaded={handleDataLoaded}
-                  onTemplateDetected={handleTemplateDetected}
-                  currentTemplate={template}
-                  onTemplateLoad={handleTemplateLoad}
-                  compact={true}
-                />
-              </div>
-
               {/* Show export preview if active, otherwise show DataTable */}
               {exportPreviewContent ? (
                 exportPreviewContent

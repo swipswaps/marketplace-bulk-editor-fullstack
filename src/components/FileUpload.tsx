@@ -262,8 +262,9 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
             }
 
             // Check PRICE (required - auto-fill with 0 if missing)
+            // NOTE: PRICE = 0 is VALID (user may not have pricing yet)
             let finalPrice = price;
-            if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+            if (price === undefined || price === null || price === '' || isNaN(Number(price)) || Number(price) < 0) {
               finalPrice = 0;
               autoFilledFields.push({
                 field: 'PRICE',
