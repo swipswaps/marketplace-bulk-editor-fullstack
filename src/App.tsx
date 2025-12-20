@@ -7,11 +7,13 @@ import { BackendStatus } from './components/BackendStatus';
 import { AuthModal } from './components/AuthModal';
 import { UserMenu } from './components/UserMenu';
 import { SyncStatus } from './components/SyncStatus';
+import { DebugConsole } from './components/DebugConsole';
 import { Settings, Download, Upload } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { useData } from './contexts/DataContext';
+import './utils/consoleCapture'; // Initialize global console capture
 
 type SortField = keyof MarketplaceListing | null;
 type SortDirection = 'asc' | 'desc' | null;
@@ -421,46 +423,52 @@ function App() {
             </p>
           </div>
 
-          {/* Debug Panel */}
-          {debugLogs.length > 0 && (
-            <div className="mt-8 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Debug Logs</h3>
-                <button
-                  onClick={clearDebugLogs}
-                  className="text-xs px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                >
-                  Clear
-                </button>
-              </div>
-              <div className="p-4 max-h-96 overflow-y-auto font-mono text-xs">
-                {debugLogs.map((log, idx) => (
-                  <div
-                    key={idx}
-                    className={`mb-2 ${
-                      log.level === 'error' ? 'text-red-600 dark:text-red-400' :
-                      log.level === 'warn' ? 'text-yellow-600 dark:text-yellow-400' :
-                      log.level === 'success' ? 'text-green-600 dark:text-green-400' :
-                      'text-gray-700 dark:text-gray-300'
-                    }`}
+          {/* Debug Panels */}
+          <div className="mt-8 space-y-4">
+            {/* DataContext Debug Logs (Database operations) */}
+            {debugLogs.length > 0 && (
+              <div className="border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Database Debug Logs</h3>
+                  <button
+                    onClick={clearDebugLogs}
+                    className="text-xs px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                   >
-                    <span className="text-gray-500 dark:text-gray-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                    {' '}
-                    <span className="font-semibold">
-                      {log.level === 'error' ? '❌' : log.level === 'warn' ? '⚠️' : log.level === 'success' ? '✅' : '🔵'}
-                    </span>
-                    {' '}
-                    {log.message}
-                    {log.data && (
-                      <pre className="mt-1 ml-4 text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                        {JSON.stringify(log.data, null, 2)}
-                      </pre>
-                    )}
-                  </div>
-                ))}
+                    Clear
+                  </button>
+                </div>
+                <div className="p-4 max-h-96 overflow-y-auto font-mono text-xs">
+                  {debugLogs.map((log, idx) => (
+                    <div
+                      key={idx}
+                      className={`mb-2 ${
+                        log.level === 'error' ? 'text-red-600 dark:text-red-400' :
+                        log.level === 'warn' ? 'text-yellow-600 dark:text-yellow-400' :
+                        log.level === 'success' ? 'text-green-600 dark:text-green-400' :
+                        'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span className="text-gray-500 dark:text-gray-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                      {' '}
+                      <span className="font-semibold">
+                        {log.level === 'error' ? '❌' : log.level === 'warn' ? '⚠️' : log.level === 'success' ? '✅' : '🔵'}
+                      </span>
+                      {' '}
+                      {log.message}
+                      {log.data && (
+                        <pre className="mt-1 ml-4 text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                          {JSON.stringify(log.data, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Global Console Output (all console.log/error/warn/info) */}
+            <DebugConsole />
+          </div>
         </div>
       </main>
     </div>
