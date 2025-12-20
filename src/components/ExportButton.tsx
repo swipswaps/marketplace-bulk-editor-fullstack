@@ -46,6 +46,8 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
         const bVal = b[sortField];
 
         if (aVal === bVal) return 0;
+        if (aVal === undefined || aVal === null) return 1;
+        if (bVal === undefined || bVal === null) return -1;
 
         const comparison = aVal < bVal ? -1 : 1;
         return sortDirection === 'asc' ? comparison : -comparison; // Match DataTable sorting exactly
@@ -117,9 +119,18 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
       }
     }
 
-    // Prepare data for export (remove id field)
+    // Warn if rows have auto-filled fields
+    const autoFilledCount = sortedData.filter(listing => listing._autoFilled && listing._autoFilled.length > 0).length;
+    if (autoFilledCount > 0) {
+      const message = `⚠️ ${autoFilledCount} row(s) have auto-filled fields from import.\n\nThese fields were empty in the original file and filled with default values.\nPlease review orange-highlighted cells before exporting.\n\nContinue export anyway?`;
+      if (!confirm(message)) {
+        return;
+      }
+    }
+
+    // Prepare data for export (remove id and _autoFilled fields)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const exportData = sortedData.map(({ id, ...rest }) => rest);
+    const exportData = sortedData.map(({ id, _autoFilled, ...rest }) => rest);
 
     const workbook = XLSX.utils.book_new();
     let worksheet: XLSX.WorkSheet;

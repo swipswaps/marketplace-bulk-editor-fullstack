@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileSpreadsheet, Table, AlertCircle, CheckCircle, X, ExternalLink, Download, AlertTriangle } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import type { MarketplaceListing, TemplateMetadata } from '../types';
+import type { MarketplaceListing, TemplateMetadata, ImportValidationResult, AutoFilledField } from '../types';
+import { ImportValidationModal } from './ImportValidationModal';
 
 interface FileUploadProps {
   onDataLoaded: (data: MarketplaceListing[]) => void;
@@ -28,6 +29,7 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
   });
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [showPreloadWarning, setShowPreloadWarning] = useState(false);
+  const [validationModal, setValidationModal] = useState<ImportValidationResult | null>(null);
 
   // Template processing functions
   const findHeaderRow = (worksheet: XLSX.WorkSheet): number => {
@@ -164,8 +166,6 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Accumulate all listings from all files before calling onDataLoaded
-    const allListings: MarketplaceListing[] = [];
     let filesProcessed = 0;
     const totalFiles = acceptedFiles.length;
 
@@ -224,46 +224,122 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
             defval: ''
           }) as Record<string, string | number>[];
 
-          // Validation warnings
-          const warnings: string[] = [];
-          let emptyTitles = 0;
-          let invalidPrices = 0;
-          let emptyDescriptions = 0;
+          // Transform data to MarketplaceListing format with validation tracking
+          const validationResult: ImportValidationResult = {
+            valid: [],
+            autoFilled: [],
+            rejected: [],
+            totalRows: jsonData.length,
+            validCount: 0,
+            autoFilledCount: 0,
+            rejectedCount: 0
+          };
 
-          // Transform data to MarketplaceListing format
-          const listings: MarketplaceListing[] = jsonData.map((row) => {
-            // Check for validation issues
-            const title = String(row.TITLE || '');
-            const description = String(row.DESCRIPTION || '');
+          jsonData.forEach((row) => {
+            const title = String(row.TITLE || '').trim();
+            const price = row.PRICE;
+            const condition = String(row.CONDITION || '').trim();
+            const description = String(row.DESCRIPTION || '').trim();
+            const category = String(row.CATEGORY || '').trim();
+            const offerShipping = String(row['OFFER SHIPPING'] || '').trim();
 
-            if (!title || title.trim() === '') {
-              emptyTitles++;
-            }
-            if (!row.PRICE || isNaN(Number(row.PRICE)) || Number(row.PRICE) <= 0) {
-              invalidPrices++;
-            }
-            if (!description || description.trim() === '') {
-              emptyDescriptions++;
+            // Track auto-filled fields
+            const autoFilledFields: AutoFilledField[] = [];
+
+            // Check TITLE (required - reject if missing)
+            if (!title) {
+              validationResult.rejected.push({
+                id: crypto.randomUUID(),
+                TITLE: '',
+                PRICE: price || 0,
+                CONDITION: condition || 'New',
+                DESCRIPTION: description,
+                CATEGORY: category,
+                'OFFER SHIPPING': offerShipping || 'No'
+              });
+              validationResult.rejectedCount++;
+              return; // Skip this row
             }
 
-            return {
+            // Check PRICE (required - auto-fill with 0 if missing)
+            let finalPrice = price;
+            if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+              finalPrice = 0;
+              autoFilledFields.push({
+                field: 'PRICE',
+                originalValue: price,
+                defaultValue: 0,
+                reason: 'Field was empty or invalid in imported file'
+              });
+            }
+
+            // Check CONDITION (required - auto-fill with empty if missing)
+            let finalCondition = condition;
+            if (!condition) {
+              finalCondition = '';
+              autoFilledFields.push({
+                field: 'CONDITION',
+                originalValue: condition,
+                defaultValue: '',
+                reason: 'Field was empty in imported file'
+              });
+            }
+
+            // Check DESCRIPTION (optional but recommended)
+            if (!description) {
+              autoFilledFields.push({
+                field: 'DESCRIPTION',
+                originalValue: description,
+                defaultValue: '',
+                reason: 'Field was empty in imported file (recommended to fill)'
+              });
+            }
+
+            // Check CATEGORY (optional)
+            if (!category) {
+              autoFilledFields.push({
+                field: 'CATEGORY',
+                originalValue: category,
+                defaultValue: '',
+                reason: 'Field was empty in imported file'
+              });
+            }
+
+            // Check OFFER SHIPPING (optional - auto-fill with 'No')
+            let finalOfferShipping = offerShipping;
+            if (!offerShipping) {
+              finalOfferShipping = 'No';
+              autoFilledFields.push({
+                field: 'OFFER SHIPPING',
+                originalValue: offerShipping,
+                defaultValue: 'No',
+                reason: 'Field was empty in imported file'
+              });
+            }
+
+            const listing: MarketplaceListing = {
               id: crypto.randomUUID(),
               TITLE: title,
-              PRICE: row.PRICE || 0,
-              CONDITION: String(row.CONDITION || 'New'),
+              PRICE: finalPrice,
+              CONDITION: finalCondition,
               DESCRIPTION: description,
-              CATEGORY: String(row.CATEGORY || 'Electronics'),
-              'OFFER SHIPPING': String(row['OFFER SHIPPING'] || 'No')
+              CATEGORY: category,
+              'OFFER SHIPPING': finalOfferShipping,
+              _autoFilled: autoFilledFields.length > 0 ? autoFilledFields : undefined
             };
+
+            if (autoFilledFields.length > 0) {
+              validationResult.autoFilled.push(listing);
+              validationResult.autoFilledCount++;
+            } else {
+              validationResult.valid.push(listing);
+              validationResult.validCount++;
+            }
           });
 
-          // Build warning message
-          if (emptyTitles > 0) warnings.push(`${emptyTitles} listing(s) with empty titles`);
-          if (invalidPrices > 0) warnings.push(`${invalidPrices} listing(s) with invalid prices`);
-          if (emptyDescriptions > 0) warnings.push(`${emptyDescriptions} listing(s) with empty descriptions`);
-
           // Check if this looks like a template file
-          if (onTemplateDetected && isTemplateFile(file.name, headerRows, listings.length)) {
+          const allListingsFromValidation = [...validationResult.valid, ...validationResult.autoFilled];
+          if (onTemplateDetected && isTemplateFile(file.name, headerRows, allListingsFromValidation.length)) {
             // This looks like a template - show modal to ask user what they want to do
             const template: TemplateMetadata = {
               sheetName,
@@ -276,26 +352,22 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
               show: true,
               fileName: file.name,
               template,
-              sampleData: listings
+              sampleData: allListingsFromValidation
             });
           } else {
-            // Regular data file - accumulate listings
-            allListings.push(...listings);
+            // Regular data file - show validation modal if there are issues
             filesProcessed++;
 
-            // Show warnings if any
-            if (warnings.length > 0) {
-              const warningMsg = `⚠️ Import completed with warnings:\n\n${warnings.join('\n')}\n\nAdded ${listings.length} listing(s) from ${file.name}\n\nPlease review and fix these issues before exporting.`;
-              alert(warningMsg);
-            } else {
-              // Show success message
-              console.log(`✅ Successfully imported ${listings.length} listing(s) from ${file.name}`);
-            }
-
-            // Only call onDataLoaded once all files are processed
+            // Only show validation modal once all files are processed
             if (filesProcessed === totalFiles) {
-              console.log(`📦 All ${totalFiles} file(s) processed. Total listings: ${allListings.length}`);
-              onDataLoaded(allListings);
+              // If there are auto-filled or rejected rows, show validation modal
+              if (validationResult.autoFilledCount > 0 || validationResult.rejectedCount > 0) {
+                setValidationModal(validationResult);
+              } else {
+                // All rows valid - import directly
+                console.log(`✅ Successfully imported ${validationResult.validCount} listing(s) from ${file.name}`);
+                onDataLoaded(allListingsFromValidation);
+              }
             }
           }
         } catch (error) {
@@ -307,6 +379,27 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
       reader.readAsBinaryString(file);
     });
   }, [onDataLoaded, onTemplateDetected]);
+
+  // Validation modal handlers
+  const handleImportAll = () => {
+    if (!validationModal) return;
+    const allListings = [...validationModal.valid, ...validationModal.autoFilled];
+    console.log(`✅ Imported ${allListings.length} listing(s) (${validationModal.autoFilledCount} with auto-filled fields)`);
+    onDataLoaded(allListings);
+    setValidationModal(null);
+  };
+
+  const handleImportValidOnly = () => {
+    if (!validationModal) return;
+    console.log(`✅ Imported ${validationModal.validCount} valid listing(s) (skipped ${validationModal.autoFilledCount + validationModal.rejectedCount} rows)`);
+    onDataLoaded(validationModal.valid);
+    setValidationModal(null);
+  };
+
+  const handleCancelImport = () => {
+    console.log('❌ Import cancelled by user');
+    setValidationModal(null);
+  };
 
   const handleLoadSampleData = () => {
     onDataLoaded(templateModal.sampleData);
@@ -588,6 +681,14 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
       {/* Modals */}
       {showPreloadWarning && renderPreloadWarningModal()}
       {templateModal.show && renderTemplateDetectionModal()}
+      {validationModal && (
+        <ImportValidationModal
+          validationResult={validationModal}
+          onImportAll={handleImportAll}
+          onImportValidOnly={handleImportValidOnly}
+          onCancel={handleCancelImport}
+        />
+      )}
     </>
   );
 }

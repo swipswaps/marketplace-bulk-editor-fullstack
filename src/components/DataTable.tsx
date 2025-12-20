@@ -4,6 +4,16 @@ import type { MarketplaceListing } from '../types';
 import { CONDITIONS } from '../types';
 import { validateListing } from '../utils/validation';
 
+// Helper to check if a field was auto-filled during import
+const isFieldAutoFilled = (listing: MarketplaceListing, fieldName: keyof MarketplaceListing): boolean => {
+  return listing._autoFilled?.some(f => f.field === fieldName) || false;
+};
+
+// Helper to get auto-fill reason
+const getAutoFillReason = (listing: MarketplaceListing, fieldName: keyof MarketplaceListing): string | undefined => {
+  return listing._autoFilled?.find(f => f.field === fieldName)?.reason;
+};
+
 type SortField = keyof MarketplaceListing | null;
 type SortDirection = 'asc' | 'desc' | null;
 
@@ -340,6 +350,8 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
     const bVal = b[sortField];
 
     if (aVal === bVal) return 0;
+    if (aVal === undefined || aVal === null) return 1;
+    if (bVal === undefined || bVal === null) return -1;
 
     const comparison = aVal < bVal ? -1 : 1;
     return sortDirection === 'asc' ? comparison : -comparison;
@@ -807,7 +819,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                     focusedCell?.id === listing.id && focusedCell?.field === 'PRICE' ? 'ring-2 ring-blue-500 ring-inset' : ''
                   } ${
                     validateListing(listing).zeroPrice ? 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-l-yellow-500' : ''
+                  } ${
+                    isFieldAutoFilled(listing, 'PRICE') ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-500' : ''
                   }`}
+                  title={isFieldAutoFilled(listing, 'PRICE') ? `⚠️ Auto-filled: ${getAutoFillReason(listing, 'PRICE')}` : undefined}
                   onClick={() => {
                     setFocusedCell({ id: listing.id, field: 'PRICE' });
                     setEditingCell({ id: listing.id, field: 'PRICE' });
@@ -879,7 +894,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                     focusedCell?.id === listing.id && focusedCell?.field === 'CONDITION' ? 'ring-2 ring-blue-500 ring-inset' : ''
                   } ${
                     validateListing(listing).emptyCondition || validateListing(listing).invalidCondition ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-l-red-500' : ''
+                  } ${
+                    isFieldAutoFilled(listing, 'CONDITION') ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-500' : ''
                   }`}
+                  title={isFieldAutoFilled(listing, 'CONDITION') ? `⚠️ Auto-filled: ${getAutoFillReason(listing, 'CONDITION')}` : undefined}
                   onClick={() => {
                     setFocusedCell({ id: listing.id, field: 'CONDITION' });
                     setEditingCell({ id: listing.id, field: 'CONDITION' });
@@ -919,7 +937,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                 {visibleColumns.DESCRIPTION && <td
                   className={`px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100 ${
                     focusedCell?.id === listing.id && focusedCell?.field === 'DESCRIPTION' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  } ${
+                    isFieldAutoFilled(listing, 'DESCRIPTION') ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-500' : ''
                   }`}
+                  title={isFieldAutoFilled(listing, 'DESCRIPTION') ? `⚠️ Auto-filled: ${getAutoFillReason(listing, 'DESCRIPTION')}` : undefined}
                   onClick={() => {
                     setFocusedCell({ id: listing.id, field: 'DESCRIPTION' });
                     setEditingCell({ id: listing.id, field: 'DESCRIPTION' });
@@ -970,7 +991,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                 {visibleColumns.CATEGORY && <td
                   className={`px-4 py-2 border-b dark:border-gray-700 cursor-text text-gray-900 dark:text-gray-100 ${
                     focusedCell?.id === listing.id && focusedCell?.field === 'CATEGORY' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  } ${
+                    isFieldAutoFilled(listing, 'CATEGORY') ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-500' : ''
                   }`}
+                  title={isFieldAutoFilled(listing, 'CATEGORY') ? `⚠️ Auto-filled: ${getAutoFillReason(listing, 'CATEGORY')}` : undefined}
                   onClick={() => {
                     setFocusedCell({ id: listing.id, field: 'CATEGORY' });
                     setEditingCell({ id: listing.id, field: 'CATEGORY' });
@@ -1004,7 +1028,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                 {visibleColumns['OFFER SHIPPING'] && <td
                   className={`px-4 py-2 border-b dark:border-gray-700 cursor-pointer text-gray-900 dark:text-gray-100 ${
                     focusedCell?.id === listing.id && focusedCell?.field === 'OFFER SHIPPING' ? 'ring-2 ring-blue-500 ring-inset' : ''
+                  } ${
+                    isFieldAutoFilled(listing, 'OFFER SHIPPING') ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-500' : ''
                   }`}
+                  title={isFieldAutoFilled(listing, 'OFFER SHIPPING') ? `⚠️ Auto-filled: ${getAutoFillReason(listing, 'OFFER SHIPPING')}` : undefined}
                   onClick={() => {
                     setFocusedCell({ id: listing.id, field: 'OFFER SHIPPING' });
                     setEditingCell({ id: listing.id, field: 'OFFER SHIPPING' });

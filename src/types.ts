@@ -6,6 +6,14 @@ export interface MarketplaceListing {
   DESCRIPTION: string;
   CATEGORY: string;
   'OFFER SHIPPING': string;
+  _autoFilled?: AutoFilledField[]; // Track which fields were auto-filled during import
+}
+
+export interface AutoFilledField {
+  field: keyof MarketplaceListing;
+  originalValue: any; // The original value from import (null, undefined, empty string)
+  defaultValue: any; // The default value we filled in
+  reason: string; // Human-readable reason (e.g., "Field was empty in imported file")
 }
 
 export const REQUIRED_COLUMNS = [
@@ -30,4 +38,14 @@ export interface TemplateMetadata {
   headerRows: string[][]; // All rows before the column header row (e.g., title, instructions)
   columnHeaders: string[]; // The actual column headers (TITLE, PRICE, etc.)
   sampleData?: MarketplaceListing[]; // Optional sample data from the template
+}
+
+export interface ImportValidationResult {
+  valid: MarketplaceListing[]; // Rows with all required fields
+  autoFilled: MarketplaceListing[]; // Rows with auto-filled fields (needs review)
+  rejected: MarketplaceListing[]; // Rows missing TITLE (cannot import)
+  totalRows: number;
+  validCount: number;
+  autoFilledCount: number;
+  rejectedCount: number;
 }
