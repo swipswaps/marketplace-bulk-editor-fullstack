@@ -28,3 +28,14 @@ dist-ssr
 # Chat logs and notes (may contain sensitive data)
 notes/
 *.txt
+
+# Test files with hardcoded credentials (GitGuardian alerts)
+test_*.py
+*_test.py
+ADMIN_CREDENTIALS.md
+
+# Test screenshots and output
+*_screenshots/
+screenshot_*.png
+test_output.txt
+*.sql
