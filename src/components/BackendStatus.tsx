@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
-import { API_BASE } from '../config';
+import { API_BASE, isGitHubPages } from '../config';
 
 interface BackendStatusProps {
   className?: string;
@@ -164,15 +164,51 @@ export function BackendStatus({ className = '' }: BackendStatusProps) {
 
             {health.status === 'disconnected' && showSetupGuide && (
               <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  🚀 Start Docker Backend
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                  Run this command in your terminal:
-                </p>
-                <code className="block p-2 bg-gray-100 dark:bg-gray-900 rounded text-xs font-mono">
-                  ./docker-start.sh
-                </code>
+                {isGitHubPages ? (
+                  <>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      🔒 Mixed Content Blocked
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                      GitHub Pages (HTTPS) cannot connect to localhost (HTTP) due to browser security.
+                    </p>
+                    <p className="text-xs font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      To enable backend connection:
+                    </p>
+                    <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-2 ml-4 list-decimal">
+                      <li>
+                        Start your local backend:
+                        <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-900 rounded font-mono">
+                          ./docker-start.sh
+                        </code>
+                      </li>
+                      <li>
+                        Click the padlock icon 🔒 in the address bar
+                      </li>
+                      <li>
+                        Click "Disable protection for now" (Firefox) or "Site settings" → "Insecure content: Allow" (Chrome)
+                      </li>
+                      <li>
+                        Reload this page - backend should connect
+                      </li>
+                    </ol>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-3">
+                      ⚠️ Only do this when browsing from your local machine with backend running
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      🚀 Start Docker Backend
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                      Run this command in your terminal:
+                    </p>
+                    <code className="block p-2 bg-gray-100 dark:bg-gray-900 rounded text-xs font-mono">
+                      ./docker-start.sh
+                    </code>
+                  </>
+                )}
                 <a
                   href="https://github.com/swipswaps/marketplace-bulk-editor#docker-deployment"
                   target="_blank"
