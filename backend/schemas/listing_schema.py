@@ -30,7 +30,8 @@ class ListingSchema(Schema):
 
 
 class ListingCreateSchema(Schema):
-    """Listing creation schema"""
+    """Listing creation schema (also used for upsert - id is optional)"""
+    id = fields.Str(allow_none=True)  # Optional: if provided, will update existing listing (upsert)
     title = fields.Str(required=True, validate=validate.Length(min=1, max=150))
     price = fields.Decimal(required=True, as_string=True, places=2)
     condition = fields.Str(required=True, validate=validate.OneOf([
@@ -42,7 +43,7 @@ class ListingCreateSchema(Schema):
     source = fields.Str(allow_none=True, validate=validate.OneOf(['manual', 'ocr', 'import']))
     ocr_scan_id = fields.Str(allow_none=True)
     extra_data = fields.Dict(allow_none=True)  # Renamed from metadata to avoid SQLAlchemy conflict (Rule 16)
-    
+
     @validates('price')
     def validate_price(self, value):
         """Validate price is positive"""
