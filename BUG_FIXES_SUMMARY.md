@@ -243,11 +243,13 @@ if (merged.length !== prevListings.length || JSON.stringify(merged) !== JSON.str
 - ✅ Initial migration created (captures current schema)
 - ✅ Ready for future schema changes
 
-### Pattern 2: Admin Cleanup Endpoint ⏳ IN PROGRESS
+### Pattern 2: Admin Cleanup Endpoint ✅ COMPLETE
 - ✅ Created `backend/routes/admin.py` with cleanup endpoint
 - ✅ Registered admin blueprint in `app.py`
-- ⏳ Need to add frontend button
-- ⏳ Need to restart backend
+- ✅ Added `cleanupDuplicates()` function to `DataContext.tsx`
+- ✅ Added "Cleanup" button to UI (orange button)
+- ✅ Backend restarted and tested
+- ✅ **FIX**: Clear localStorage before reload to prevent re-merging duplicates
 
 ### Pattern 3: Unique Constraint ⏳ PENDING
 - ⏳ Need to create migration for unique constraint
@@ -255,12 +257,51 @@ if (merged.length !== prevListings.length || JSON.stringify(merged) !== JSON.str
 
 ---
 
+## Additional Fixes (Post-Implementation)
+
+### Bug #5 (CRITICAL): Cleanup Duplicates Not Working in UI
+**Issue**: Cleanup removed duplicates from database, but UI still showed duplicates
+
+**Root cause**: `loadFromDatabase()` was merging clean database with dirty localStorage
+
+**Fix**: Clear localStorage BEFORE reloading from database
+- Modified `cleanupDuplicates()` in `src/contexts/DataContext.tsx`
+- Added `setListings([])` before `loadFromDatabase()`
+- Now replaces instead of merges
+
+**Commit**: `1af59be` - "Fix cleanup duplicates to clear localStorage before reload"
+
+### Bug #6 (CRITICAL): Schema Validation Error on Save
+**Issue**: All saves failed with "Unknown field: id" validation error
+
+**Root cause**: Backend schema didn't accept `id` field that frontend was sending for upsert
+
+**Fix**: Added `id` field to `ListingCreateSchema`
+- Modified `backend/schemas/listing_schema.py`
+- Added `id = fields.Str(allow_none=True)` to accept optional id
+- Now accepts id for upsert logic (update if exists, create if not)
+
+**Commit**: `a5411eb` - "Fix schema to accept id field for upsert logic"
+
+---
+
+## Testing Required (CRITICAL - Before Push)
+
+1. ⏳ **Test save workflow** - Verify no validation errors
+2. ⏳ **Test upsert logic** - Save → edit → save → verify no duplicates created
+3. ⏳ **Test cleanup endpoint** - Remove existing duplicates, verify they don't reappear
+4. ⏳ **Test complete workflow** - Create → save → load → edit → save → load
+5. ⏳ **Verify browser console** - No errors during any operation
+
+---
+
 ## Next Steps
 
-1. **Add cleanup button to UI** (DataContext + App.tsx)
-2. **Restart backend** to load admin routes
-3. **Test cleanup endpoint** with existing duplicates
-4. **Create migration** for unique constraint
-5. **Update upsert logic** to use PostgreSQL ON CONFLICT
-6. **Test complete workflow**
+1. ✅ **Add cleanup button to UI** - DONE
+2. ✅ **Restart backend** - DONE
+3. ✅ **Fix cleanup localStorage bug** - DONE
+4. ✅ **Fix schema validation bug** - DONE
+5. ⏳ **Test complete workflow** - REQUIRED BEFORE PUSH
+6. ⏳ **Create migration** for unique constraint (Pattern 3)
+7. ⏳ **Update upsert logic** to use PostgreSQL ON CONFLICT (Pattern 3)
 
