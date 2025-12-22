@@ -1,7 +1,10 @@
 """
 OCR routes
 """
+import os
 import time
+import tempfile
+import logging
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
@@ -11,6 +14,9 @@ from schemas.ocr_schema import OCRScanSchema, OCRUploadSchema, OCRCorrectionSche
 from utils.auth import token_required
 from utils.file_upload import save_upload_file, delete_upload_file
 from utils.audit import log_action
+from utils.ocr_processor import process_with_paddleocr, parse_product_catalog
+
+logger = logging.getLogger(__name__)
 
 ocr_bp = Blueprint('ocr', __name__)
 
@@ -35,8 +41,10 @@ def upload_file(current_user):
     try:
         # Save file
         file_path = save_upload_file(file, 'ocr')
+        file.seek(0, os.SEEK_END)
         file_size = file.tell()
-        
+        file.seek(0)
+
         # Create OCR scan record
         ocr_scan = OCRScan(
             user_id=current_user.id,
@@ -44,25 +52,62 @@ def upload_file(current_user):
             file_path=file_path,
             file_size=file_size,
             file_type=file.content_type,
-            status='pending'
+            status='processing'
         )
-        
+
         db.session.add(ocr_scan)
         db.session.commit()
-        
+
         log_action(current_user.id, 'upload_ocr_file', 'ocr_scan', ocr_scan.id, 201)
-        
-        # TODO: Queue OCR processing task (implement in Phase 3)
-        # For now, return pending status
-        
+
+        # Process OCR immediately
+        try:
+            logger.info(f"Processing OCR for {file.filename} (scan_id={ocr_scan.id})")
+
+            start_time = time.time()
+
+            # Process with PaddleOCR directly (receipts-ocr pattern)
+            raw_text, confidence, blocks = process_with_paddleocr(file_path)
+
+            processing_time = time.time() - start_time
+
+            # Parse products from OCR text
+            products = parse_product_catalog(raw_text)
+
+            # Update OCR scan with results
+            ocr_scan.ocr_text = raw_text
+            ocr_scan.extracted_data = {'products': products}
+            ocr_scan.confidence_score = confidence
+            ocr_scan.processing_time = processing_time
+            ocr_scan.items_extracted = len(products)
+            ocr_scan.status = 'completed'
+            ocr_scan.completed_at = datetime.utcnow()
+
+            db.session.commit()
+
+            logger.info(f"OCR completed: {len(products)} products extracted (confidence={confidence:.2f}, time={processing_time:.2f}s)")
+
+        except Exception as ocr_error:
+            logger.error(f"OCR processing failed: {ocr_error}", exc_info=True)
+            ocr_scan.status = 'failed'
+            ocr_scan.error_message = str(ocr_error)
+            db.session.commit()
+
+            return jsonify({
+                'error': 'OCR processing failed',
+                'details': str(ocr_error),
+                'ocr_scan': ocr_scan_schema.dump(ocr_scan)
+            }), 500
+
         return jsonify({
-            'message': 'File uploaded successfully',
+            'message': 'File uploaded and processed successfully',
             'ocr_scan': ocr_scan_schema.dump(ocr_scan)
         }), 201
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Upload failed: {e}", exc_info=True)
         return jsonify({'error': 'Upload failed', 'details': str(e)}), 500
 
 

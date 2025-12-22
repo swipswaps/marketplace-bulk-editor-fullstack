@@ -8,6 +8,7 @@ import { AuthModal } from './components/AuthModal';
 import { UserMenu } from './components/UserMenu';
 import { SyncStatus } from './components/SyncStatus';
 import { DebugConsole } from './components/DebugConsole';
+import { OCRUpload } from './components/OCRUpload';
 import { Settings, Download, Upload } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
@@ -35,6 +36,7 @@ function App() {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showOCRUpload, setShowOCRUpload] = useState(false);
   const [exportPreviewContent, setExportPreviewContent] = useState<React.ReactNode | null>(null);
   const [marketplace, setMarketplace] = useState<'facebook' | 'ebay' | 'amazon'>('facebook');
   const [hasUploadedFile, setHasUploadedFile] = useState(() => {
@@ -229,6 +231,7 @@ function App() {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+          {/* Top Row: Title, Platform, Status, User Controls */}
           <div className="flex items-center justify-between gap-4">
             {/* Left: Logo, Title, and Marketplace Selector */}
             <div className="flex items-center gap-4">
@@ -266,49 +269,53 @@ function App() {
               {isAuthenticated && <SyncStatus />}
             </div>
 
-            {/* Right: Controls */}
+            {/* Right: User Controls */}
             <div className="flex items-center gap-3">
-            {/* User Menu */}
-            <UserMenu onLoginClick={() => setShowAuthModal(true)} />
+              {/* User Menu */}
+              <UserMenu onLoginClick={() => setShowAuthModal(true)} />
 
-            {/* Undo/Redo Buttons */}
-            <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
+              {/* Undo/Redo Buttons */}
+              <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
+                <button
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-text"
+                  title="Undo (Ctrl+Z)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7v6h6"/>
+                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-text"
+                  title="Redo (Ctrl+Y)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 7v6h-6"/>
+                    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Settings Button */}
               <button
-                onClick={handleUndo}
-                disabled={historyIndex <= 0}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-text"
-                title="Undo (Ctrl+Z)"
+                onClick={() => setShowSettings(true)}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors select-text"
+                title="Settings & Legal Notice"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 7v6h6"/>
-                  <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
-                </svg>
-              </button>
-              <button
-                onClick={handleRedo}
-                disabled={historyIndex >= history.length - 1}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-text"
-                title="Redo (Ctrl+Y)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 7v6h-6"/>
-                  <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
-                </svg>
+                <Settings size={20} />
               </button>
             </div>
+          </div>
 
-            {/* Settings Button */}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors select-text"
-              title="Settings & Legal Notice"
-            >
-              <Settings size={20} />
-            </button>
-
+          {/* Bottom Row: Action Buttons - Always Visible */}
+          <div className="flex items-center justify-center gap-2 pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
             {/* Database Buttons (only when authenticated) */}
             {isAuthenticated && (
-              <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
+              <>
                 <button
                   onClick={handleSaveToDatabase}
                   disabled={isSyncing || listings.length === 0}
@@ -327,42 +334,50 @@ function App() {
                   <Download size={16} />
                   {isSyncing ? 'Loading...' : 'Load'}
                 </button>
-              </div>
+              </>
             )}
 
-            {/* Import More / Clear All / Export Buttons */}
-            <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
-              {/* Import More button - always visible */}
-              <FileUpload
-                onDataLoaded={handleDataLoaded}
-                onTemplateDetected={handleTemplateDetected}
-                currentTemplate={template}
-                onTemplateLoad={handleTemplateLoad}
-                compact={true}
-              />
+            {/* Import More button - always visible */}
+            <FileUpload
+              onDataLoaded={handleDataLoaded}
+              onTemplateDetected={handleTemplateDetected}
+              currentTemplate={template}
+              onTemplateLoad={handleTemplateLoad}
+              compact={true}
+            />
 
-              {/* Clear All and Export - only when data exists */}
-              {listings.length > 0 && (
-                <>
-                  <button
-                    onClick={handleClearAll}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors shadow-sm select-text"
-                    title={`Clear all ${listings.length} listing(s) - this cannot be undone!`}
-                  >
-                    <Trash2 size={16} />
-                    Clear All
-                  </button>
-                  <ExportButton
-                    data={listings}
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    template={template}
-                    onPreviewRender={setExportPreviewContent}
-                  />
-                </>
-              )}
-            </div>
-            </div>
+            {/* OCR Upload button - only when authenticated */}
+            {isAuthenticated && (
+              <button
+                onClick={() => setShowOCRUpload(true)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors shadow-sm select-text"
+                title="Upload image for OCR processing (PaddleOCR)"
+              >
+                <FileSpreadsheet size={16} />
+                OCR
+              </button>
+            )}
+
+            {/* Clear All and Export - only when data exists */}
+            {listings.length > 0 && (
+              <>
+                <button
+                  onClick={handleClearAll}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors shadow-sm select-text"
+                  title={`Clear all ${listings.length} listing(s) - this cannot be undone!`}
+                >
+                  <Trash2 size={16} />
+                  Clear All
+                </button>
+                <ExportButton
+                  data={listings}
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  template={template}
+                  onPreviewRender={setExportPreviewContent}
+                />
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -380,6 +395,26 @@ function App() {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
       />
+
+      {/* OCR Upload Modal */}
+      {showOCRUpload && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">OCR Image Upload</h2>
+                <button
+                  onClick={() => setShowOCRUpload(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+              <OCRUpload />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 py-8">

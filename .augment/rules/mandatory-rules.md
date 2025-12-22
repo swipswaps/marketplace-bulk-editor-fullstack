@@ -1,7 +1,7 @@
 ---
 type: "always_apply"
-description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, Selenium testing (VISIBLE mode, OCR verification, screenshots in README), complete workflow testing, Docker deployment, ORM safety, feature preservation, use existing browser windows with xdotool, MANDATORY WORKFLOW PATTERN ENFORCEMENT"
-version: "3.5"
+description: "Mandatory rules for all AI assistant interactions - workspace verification, evidence requirements, Selenium testing (VISIBLE mode, OCR verification, screenshots in README), complete workflow testing, Docker deployment, ORM safety, feature preservation, use existing browser windows with xdotool, MANDATORY WORKFLOW PATTERN ENFORCEMENT, USER REQUEST ANALYSIS BEFORE EXECUTION, SCREENSHOT CLAIMS REQUIRE OCR EVIDENCE"
+version: "3.7"
 ---
 
 ## Rule 0: Mandatory Workflow Pattern (META-RULE - CRITICAL)
@@ -16,8 +16,66 @@ The user has to constantly ask:
 - "Provide evidence"
 - "Use OCR to verify"
 - "Why didn't you follow the rules?"
+- "Why show screenshot size instead of showing me the screenshot?"
 
 **This should NOT be necessary.** The assistant should self-enforce this pattern automatically.
+
+### CRITICAL: User Request Analysis (NEW REQUIREMENT)
+
+**BEFORE executing ANY user request, the assistant MUST:**
+
+1. **Break down the request into individual steps**
+2. **For EACH step, identify which rules apply**
+3. **Explain to the user which rules apply to each step**
+4. **Show the planned workflow with rule citations**
+5. **Ask for confirmation if any ambiguity exists**
+
+**Example:**
+
+User request: "use selenium and do ocr on the open firefox window with marketplace-bulk-editor in the title to verify"
+
+**Assistant MUST respond:**
+
+```
+## Analyzing Your Request
+
+Your request breaks down into these steps:
+
+### Step 1: Find the open Firefox window with "marketplace-bulk-editor" in title
+**Rules that apply:**
+- Rule 26: Use Existing Browser Window with xdotool - Must find correct Firefox window by title
+- Rule 5: Ask Don't Guess - Must list all windows and find the correct one, not guess
+
+### Step 2: Take screenshot of that window
+**Rules that apply:**
+- Rule 26: Use Existing Browser Window - Must activate window and verify it's in focus
+- Rule 2: Evidence-Before-Assertion - Must show screenshot to user, not just file size
+
+### Step 3: Use OCR to read the screenshot
+**Rules that apply:**
+- Rule 9: OCR Verification - Must show full OCR output, not just summary
+- Rule 2: Evidence-Before-Assertion - Must show actual extracted text
+
+### Step 4: Display screenshot to user
+**Rules that apply:**
+- Rule 2: Evidence-Before-Assertion - User must SEE the screenshot, not just know it exists
+- **CRITICAL**: Must use `code /tmp/screenshot.png` to show screenshot in VSCode file editor
+
+### Step 5: Verify expected content
+**Rules that apply:**
+- Rule 0: Mandatory Workflow Pattern - Must verify compliance with OCR evidence
+- Rule 2: Evidence-Before-Assertion - Must show what was found vs what was expected
+
+Proceeding with execution...
+```
+
+**Why This Matters:**
+
+- User shouldn't have to ask "why show screenshot size instead of showing me the screenshot?"
+- Assistant should KNOW that showing file size is useless - user needs to SEE the screenshot
+- Rule 2 (Evidence-Before-Assertion) means user must be able to VERIFY the evidence
+- Showing `ls -lh screenshot.png` doesn't let user verify anything
+- Showing screenshot in browser lets user verify visually
 
 ### The Mandatory Pattern (PER STEP)
 
@@ -204,19 +262,25 @@ o $0.00
 ### Step 5: Display screenshot to user
 
 **Rules that apply to THIS step:**
+- Rule 2: Evidence-Before-Assertion - User must SEE the screenshot to verify
 - Rule 26: Use Existing Browser Window - Must show screenshot to user
 
+**Why NOT just show file size:**
+- ❌ `ls -lh /tmp/after_fix.png` - Shows file exists but user can't verify content
+- ✅ `code /tmp/after_fix.png` - User can SEE and VERIFY the screenshot in VSCode file editor
+
 **Command:**
-open-browser file:///tmp/after_fix.png
+code /tmp/after_fix.png
 
 **Executing:**
-[open screenshot]
+[open screenshot in VSCode]
 
 **Evidence:**
-Opened file:///tmp/after_fix.png in browser
+Opened /tmp/after_fix.png in VSCode file editor - user can now visually verify the fix
 
 **Rule compliance:**
-- Rule 26 compliance: ✅ Screenshot displayed to user
+- Rule 2 compliance: ✅ User can SEE the screenshot in VSCode, not just know it exists
+- Rule 26 compliance: ✅ Screenshot displayed to user for visual verification
 ```
 
 **Phase 3: Final Verification**
@@ -1112,5 +1176,164 @@ If the assistant:
 - ALWAYS find the correct window by title
 - ALWAYS activate by specific window ID
 - ALWAYS verify with OCR that correct window is showing
+
+---
+
+## Rule 27: Screenshot Claims Require OCR Evidence (CRITICAL)
+
+**Source**: Analysis of repeated mistakes in `Marketplace_Editor_Backend_Security_Upgrade_Plan__2025-12-21T12-18-12.json`
+
+### The Problem
+
+**User repeatedly had to correct the assistant:**
+- "the false claim that the table header is not overlapping the data is incorrect"
+- "don't pretend you cannot see the screen, do ocr or read"
+- "contrary to your assertions, the problem does not persist"
+
+**Root cause**: Assistant was GUESSING what screenshots showed instead of using OCR to READ them.
+
+### The Rule
+
+**NEVER make claims about what a screenshot shows without:**
+
+1. ✅ Running OCR on the screenshot
+2. ✅ Showing FULL OCR output in terminal
+3. ✅ Displaying screenshot to user in VSCode (`code /tmp/screenshot.png`)
+4. ✅ Basing claims ONLY on OCR text, not guesses
+
+### Forbidden Phrases (Without OCR Evidence)
+
+**These phrases are FORBIDDEN without showing OCR output first:**
+
+- ❌ "I can see..."
+- ❌ "The screenshot shows..."
+- ❌ "Looking at the screenshot..."
+- ❌ "The fix appears to be working..."
+- ❌ "The problem is fixed..."
+- ❌ "The header is NOT overlapping..."
+- ❌ "The table is properly positioned..."
+
+### Required Pattern
+
+**When verifying ANYTHING with a screenshot:**
+
+```bash
+### Step N: Verify [what you're checking] with screenshot
+
+**Rules that apply:**
+- Rule 27: Screenshot Claims Require OCR Evidence
+- Rule 2: Evidence-Before-Assertion
+- Rule 26: Use Existing Browser Window
+
+**Command:**
+# Take screenshot
+DISPLAY=:0 import -window root /tmp/verify.png
+
+# Run OCR to READ the screenshot
+python3 << 'EOF'
+import pytesseract
+from PIL import Image
+img = Image.open('/tmp/verify.png')
+text = pytesseract.image_to_string(img)
+print("=== FULL OCR OUTPUT ===")
+print(text)
+EOF
+
+# Show screenshot to user in VSCode
+code /tmp/verify.png
+
+**Executing:**
+[run commands]
+
+**Evidence:**
+=== FULL OCR OUTPUT ===
+[paste FULL OCR output - do NOT summarize]
+
+**Based on OCR evidence (NOT guesses):**
+- Found text: "TITLE | PRICE | CONDITION"
+- Found text: "Canadian Solar 370-395W"
+- Overlap status: [YES/NO based on what OCR actually shows]
+- Fix status: [WORKING/NOT WORKING based on OCR evidence]
+
+**Rule compliance:**
+- Rule 27 compliance: ✅ Ran OCR, showed full output, displayed screenshot to user
+- Rule 2 compliance: ✅ Claims based on OCR evidence, not guesses
+```
+
+### Why This Rule Exists
+
+**From the chat log, the assistant made these mistakes repeatedly:**
+
+1. **Claimed "no overlap" when overlap existed**
+   - User: "the false claim that the table header is not overlapping the data is incorrect"
+   - Assistant had NOT run OCR, just guessed based on code changes
+
+2. **Claimed to "see" things without OCR**
+   - User: "don't pretend you cannot see the screen, do ocr or read"
+   - Assistant was describing what it THOUGHT should be there
+
+3. **Multiple incorrect diagnoses**
+   - Attempt 1: "sticky positioning"
+   - Attempt 2: "z-index"
+   - Attempt 3: "table structure"
+   - Attempt 4: "main table's sticky header"
+   - User: "contrary to your assertions, the problem does not persist"
+   - Assistant didn't verify EACH fix with screenshot + OCR
+
+4. **Claimed success without evidence**
+   - Assistant: "The fix appears to be working"
+   - User: "the false claim... is incorrect"
+   - No screenshot taken, no OCR run, no evidence shown
+
+### Correct vs Incorrect Examples
+
+**❌ INCORRECT (Violates Rule 27):**
+```
+I can see in screenshot_firefox_now.png that the table header is not overlapping
+the data rows anymore. The fix appears to be working.
+```
+
+**Why this is wrong:**
+- No OCR output shown
+- No screenshot displayed to user
+- Claims based on guesses, not evidence
+
+**✅ CORRECT (Follows Rule 27):**
+```
+### Step 3: Verify fix with screenshot
+
+**Command:**
+DISPLAY=:0 import -window root /tmp/verify.png
+python3 << 'EOF'
+import pytesseract
+from PIL import Image
+img = Image.open('/tmp/verify.png')
+text = pytesseract.image_to_string(img)
+print(text)
+EOF
+code /tmp/verify.png
+
+**Evidence:**
+=== OCR OUTPUT ===
+TITLE | PRICE | CONDITION
+Canadian Solar 370-395W | $150.00 | New
+[... full OCR output ...]
+
+**Based on OCR evidence:**
+- Header text found: "TITLE | PRICE | CONDITION"
+- First data row found: "Canadian Solar 370-395W | $150.00 | New"
+- No overlap detected (data row is clearly visible below header)
+- Fix status: WORKING ✅
+```
+
+### Failure to Comply
+
+**If the assistant:**
+- Makes claims about screenshots without OCR
+- Says "I can see" without showing OCR output
+- Doesn't display screenshot to user with `code`
+- Guesses what screenshot shows instead of reading it
+
+**Then the user MUST stop the assistant and cite Rule 27.**
 
 ---

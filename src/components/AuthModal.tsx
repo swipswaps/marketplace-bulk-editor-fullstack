@@ -125,11 +125,17 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
       title={mode === 'login' ? 'Login to Your Account' : 'Create an Account'}
       size="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" aria-describedby={displayError ? 'auth-error' : undefined}>
         {/* Error message */}
         {displayError && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-            <AlertCircle size={16} />
+          <div
+            id="auth-error"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+          >
+            <AlertCircle size={16} aria-hidden="true" />
             <span>{displayError}</span>
           </div>
         )}
@@ -173,7 +179,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         {/* Email field */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Email <span className="text-red-500">*</span>
+            Email <span className="text-red-500" aria-label="required">*</span>
           </label>
           <input
             id="email"
@@ -185,13 +191,16 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
             required
             autoComplete="email"
             autoFocus
+            aria-required="true"
+            aria-invalid={displayError ? 'true' : 'false'}
+            aria-describedby={displayError ? 'auth-error' : undefined}
           />
         </div>
 
         {/* Password field */}
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Password <span className="text-red-500">*</span>
+            Password <span className="text-red-500" aria-label="required">*</span>
           </label>
           <div className="relative">
             <input
@@ -205,6 +214,9 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
               required
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               minLength={8}
+              aria-required="true"
+              aria-invalid={displayError ? 'true' : 'false'}
+              aria-describedby={displayError ? 'auth-error' : undefined}
             />
             <button
               type="button"
@@ -324,17 +336,19 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           type="submit"
           disabled={isLoading || (mode === 'register' && !passwordStrength.isValid)}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+          aria-busy={isLoading}
+          aria-live="polite"
         >
           {isLoading ? (
             <span>Loading...</span>
           ) : mode === 'login' ? (
             <>
-              <LogIn size={18} />
+              <LogIn size={18} aria-hidden="true" />
               <span>Login</span>
             </>
           ) : (
             <>
-              <UserPlus size={18} />
+              <UserPlus size={18} aria-hidden="true" />
               <span>Create Account</span>
             </>
           )}

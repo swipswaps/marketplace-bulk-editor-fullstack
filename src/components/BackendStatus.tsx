@@ -292,11 +292,98 @@ export function BackendStatus({ className = '' }: BackendStatusProps) {
                       🚀 Start Docker Backend
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                      Run this command in your terminal:
+                      For high-accuracy OCR and full backend features, run the automated setup:
                     </p>
-                    <code className="block p-2 bg-gray-100 dark:bg-gray-900 rounded text-xs font-mono">
-                      ./docker-start.sh
-                    </code>
+
+                    {/* Quick Setup Section */}
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        🎯 Quick Setup (one command)
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        Open Terminal and paste:
+                      </p>
+                      <div className="relative">
+                        <code className="block p-2 bg-white dark:bg-gray-900 rounded text-xs font-mono pr-16 overflow-x-auto">
+                          curl -fsSL https://raw.githubusercontent.com/swipswaps/marketplace-bulk-editor/main/scripts/setup.sh | bash
+                        </code>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/swipswaps/marketplace-bulk-editor/main/scripts/setup.sh | bash');
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                            } catch {
+                              // Fallback for older browsers
+                              const el = document.createElement('textarea');
+                              el.value = 'curl -fsSL https://raw.githubusercontent.com/swipswaps/marketplace-bulk-editor/main/scripts/setup.sh | bash';
+                              document.body.appendChild(el);
+                              el.select();
+                              document.execCommand('copy');
+                              document.body.removeChild(el);
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                            }
+                          }}
+                          className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 select-text"
+                          title="Copy to clipboard"
+                        >
+                          {copied ? '✓ Copied' : '📋 Copy'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        This script will: check Docker → clone repo → build containers → start app
+                        <br />
+                        <small>All steps show real-time progress and error messages.</small>
+                      </p>
+                    </div>
+
+                    {/* Manual Steps (Fallback) */}
+                    <details className="text-xs">
+                      <summary className="cursor-pointer text-gray-700 dark:text-gray-300 font-medium mb-2">
+                        📝 Or follow manual steps
+                      </summary>
+                      <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-2 ml-4 list-decimal mt-2">
+                        <li>
+                          <strong>Clone repository (if not already):</strong>
+                          <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-900 rounded font-mono">
+                            git clone https://github.com/swipswaps/marketplace-bulk-editor.git
+                          </code>
+                        </li>
+                        <li>
+                          <strong>Start Docker backend:</strong>
+                          <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-900 rounded font-mono">
+                            cd marketplace-bulk-editor<br />
+                            ./docker-start.sh
+                          </code>
+                        </li>
+                        <li>
+                          <strong>Verify backend is running:</strong>
+                          <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-900 rounded font-mono">
+                            curl http://localhost:5000/
+                          </code>
+                          Should return: <code>{`{"status":"ok"}`}</code>
+                        </li>
+                      </ol>
+                    </details>
+
+                    {/* Download Script Button */}
+                    <div className="mt-3 flex gap-2">
+                      <a
+                        href="https://raw.githubusercontent.com/swipswaps/marketplace-bulk-editor/main/scripts/setup.sh"
+                        download="setup.sh"
+                        className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                      >
+                        📥 Download setup.sh
+                      </a>
+                      <a
+                        href="https://raw.githubusercontent.com/swipswaps/marketplace-bulk-editor/main/scripts/setup.ps1"
+                        download="setup.ps1"
+                        className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                      >
+                        📥 Download setup.ps1 (Windows)
+                      </a>
+                    </div>
                   </>
                 )}
                 <a

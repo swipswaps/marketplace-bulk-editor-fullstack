@@ -19,6 +19,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  accessToken: string | null;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -69,7 +70,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.user);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message || 'Login failed');
+
+      // Detect network errors (likely mixed content or CORS on GitHub Pages)
+      let errorMessage = apiError.message || 'Login failed';
+      if (errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        if (isGitHubPages) {
+          errorMessage = 'Cannot connect to backend. GitHub Pages (HTTPS) cannot connect to localhost (HTTP). Please run the backend locally and access the app at http://localhost:5173 instead.';
+        } else {
+          errorMessage = 'Cannot connect to backend. Please ensure the backend is running at http://localhost:5000 (run ./docker-start.sh)';
+        }
+      }
+
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
@@ -116,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
+    accessToken: apiClient.getAccessToken(),
     isLoading,
     error,
     login,
