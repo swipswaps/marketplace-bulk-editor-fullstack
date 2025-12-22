@@ -4,7 +4,7 @@
  * Implements offline-first with progressive enhancement
  */
 
-import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { apiClient, type ApiError } from '../utils/api';
 import { useAuth } from './AuthContext';
 import type { MarketplaceListing } from '../types';
@@ -25,7 +25,7 @@ interface DataContextType {
   error: string | null;
   isSyncing: boolean;
   debugLogs: DebugLog[];
-  setListings: (listings: MarketplaceListing[]) => void;
+  setListings: Dispatch<SetStateAction<MarketplaceListing[]>>;
   saveToDatabase: (listingsToSave: MarketplaceListing[]) => Promise<void>;
   loadFromDatabase: () => Promise<MarketplaceListing[]>;
   syncWithDatabase: () => Promise<void>;
@@ -79,9 +79,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Save to localStorage whenever listings change
-  const setListings = useCallback((newListings: MarketplaceListing[]) => {
-    setListingsState(newListings);
-    localStorage.setItem('listings', JSON.stringify(newListings));
+  // Support both direct value and functional updates
+  const setListings = useCallback((newListings: SetStateAction<MarketplaceListing[]>) => {
+    setListingsState(prevListings => {
+      const nextListings = typeof newListings === 'function' ? newListings(prevListings) : newListings;
+      localStorage.setItem('listings', JSON.stringify(nextListings));
+      return nextListings;
+    });
   }, []);
 
   // Wrap syncWithDatabase in useCallback to fix dependency issue
@@ -99,7 +103,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // Only update if database has newer data
       if (dbListings.length > 0) {
         // Use functional update to avoid stale closure (Bug #2 fix)
-        setListings(prevListings => {
+        setListings((prevListings: MarketplaceListing[]) => {
           const merged = mergeListings(prevListings, dbListings);
           // Optimize comparison - check length first (Bug #3 fix)
           if (merged.length !== prevListings.length || JSON.stringify(merged) !== JSON.stringify(prevListings)) {
@@ -243,7 +247,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // Check for conflicts with local data
       // Bug #2 fix: Use functional update to avoid stale closure
       if (dbListings.length > 0) {
-        setListings(prevListings => {
+        setListings((prevListings: MarketplaceListing[]) => {
           if (prevListings.length > 0) {
             // Merge both (keep all unique listings)
             return mergeListings(prevListings, dbListings);
@@ -283,7 +287,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         message: string;
         removed: number;
         remaining: number;
-      }>('/api/admin/cleanup/duplicates');
+      }>('/api/admin/cleanup/duplicates', {});
 
       addDebugLog('success', `cleanupDuplicates: ${response.message}`, {
         removed: response.removed,

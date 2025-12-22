@@ -4,11 +4,12 @@
  */
 
 import { useState } from 'react';
-import { Upload, FileImage, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { FileImage, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { processWithPaddleOCR, processWithTesseract, checkBackendHealth } from '../services/ocrService';
 import type { ParsedProduct } from '../types/ocr';
+import type { MarketplaceListing } from '../types';
 
 interface OCRUploadProps {
   onProductsExtracted?: (products: ParsedProduct[]) => void;
@@ -16,7 +17,7 @@ interface OCRUploadProps {
 
 export function OCRUpload({ onProductsExtracted }: OCRUploadProps) {
   const { isAuthenticated, accessToken } = useAuth();
-  const { listings, setListings } = useData();
+  const { setListings } = useData();
   const [processing, setProcessing] = useState(false);
   const [logs, setLogs] = useState<Array<{ message: string; level: string }>>([]);
   const [preview, setPreview] = useState<string | null>(null);
@@ -60,19 +61,20 @@ export function OCRUpload({ onProductsExtracted }: OCRUploadProps) {
       if (result.success && result.parsed.products.length > 0) {
         addLog(`Extracted ${result.parsed.products.length} products`, 'success');
 
-        // Convert to listings format
-        const newListings = result.parsed.products.map(product => ({
+        // Convert to listings format (MarketplaceListing type)
+        const newListings: MarketplaceListing[] = result.parsed.products.map(product => ({
+          id: crypto.randomUUID(),
           TITLE: product.name,
           PRICE: product.price || 0,
-          CONDITION: product.condition || 'New',
+          CONDITION: (product.condition || 'New') as 'New' | 'Used - Like New' | 'Used - Good' | 'Used - Fair',
           DESCRIPTION: product.description || product.name,
           CATEGORY: product.category || '',
-          'OFFER SHIPPING': 'Yes'
+          'OFFER SHIPPING': 'Yes' as 'Yes' | 'No'
         }));
 
         // Add to data table (append to existing listings)
         // Use functional update to avoid stale closure
-        setListings(prevListings => [...prevListings, ...newListings]);
+        setListings((prevListings: MarketplaceListing[]) => [...prevListings, ...newListings]);
 
         // Notify parent
         onProductsExtracted?.(result.parsed.products);
