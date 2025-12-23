@@ -71,7 +71,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('listings');
     if (stored) {
       try {
-        setListingsState(JSON.parse(stored));
+        const listings = JSON.parse(stored);
+
+        // MIGRATION: Filter out invalid listings and listings with lowercase fields
+        // (from old syncWithDatabase bug before transformation was added)
+        const validListings = listings.filter((listing: any) => {
+          // Check if listing has lowercase fields (incorrect format from old syncWithDatabase)
+          const hasLowercase = 'title' in listing && !('TITLE' in listing);
+          if (hasLowercase) {
+            console.warn('Removing listing with lowercase fields (old syncWithDatabase bug):', listing);
+            return false;
+          }
+
+          // Check if listing is valid (has non-empty TITLE, PRICE > 0, CONDITION)
+          const hasTitle = listing.TITLE && String(listing.TITLE).trim() !== '';
+          const hasPrice = listing.PRICE && Number(listing.PRICE) > 0;
+          const hasCondition = listing.CONDITION && String(listing.CONDITION).trim() !== '';
+          const isValid = hasTitle && hasPrice && hasCondition;
+
+          if (!isValid) {
+            console.warn('Removing invalid listing:', {
+              id: listing.id,
+              TITLE: listing.TITLE,
+              PRICE: listing.PRICE,
+              CONDITION: listing.CONDITION,
+              reason: !hasTitle ? 'empty TITLE' : !hasPrice ? 'zero/missing PRICE' : 'empty CONDITION'
+            });
+            return false;
+          }
+
+          return true;
+        });
+
+        if (validListings.length !== listings.length) {
+          console.log(`Migration: Removed ${listings.length - validListings.length} invalid listings`);
+          localStorage.setItem('listings', JSON.stringify(validListings));
+        }
+
+        setListingsState(validListings);
       } catch (err) {
         console.error('Failed to parse stored listings:', err);
       }
@@ -97,8 +134,38 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Silent sync - don't show loading state
     try {
-      const response = await apiClient.get<{ listings: MarketplaceListing[] }>('/api/listings');
-      const dbListings = response.listings;
+      // Backend returns lowercase field names, need to transform to frontend format
+      interface BackendListing {
+        id: string;
+        title: string;
+        price: string;
+        condition: string;
+        description?: string;
+        category?: string;
+        offer_shipping?: string;
+      }
+
+      const response = await apiClient.get<{ listings: BackendListing[] }>('/api/listings');
+
+      // Transform backend format (lowercase) to frontend format (UPPERCASE)
+      // AND filter out invalid listings (same logic as loadFromDatabase)
+      const dbListings: MarketplaceListing[] = response.listings
+        .map(listing => ({
+          id: listing.id,
+          TITLE: listing.title,
+          PRICE: parseFloat(listing.price),
+          CONDITION: listing.condition,
+          DESCRIPTION: listing.description || '',
+          CATEGORY: listing.category || '',
+          'OFFER SHIPPING': listing.offer_shipping || 'No',
+        }))
+        .filter(listing => {
+          // Filter out invalid listings (must have non-empty TITLE, PRICE > 0, CONDITION)
+          const hasTitle = listing.TITLE && String(listing.TITLE).trim() !== '';
+          const hasPrice = listing.PRICE && Number(listing.PRICE) > 0;
+          const hasCondition = listing.CONDITION && String(listing.CONDITION).trim() !== '';
+          return hasTitle && hasPrice && hasCondition;
+        });
 
       // Only update if database has newer data
       if (dbListings.length > 0) {
@@ -234,15 +301,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const response = await apiClient.get<{ listings: BackendListing[] }>('/api/listings');
 
       // Transform backend format (lowercase) to frontend format (UPPERCASE)
-      const dbListings: MarketplaceListing[] = response.listings.map(listing => ({
-        id: listing.id,
-        TITLE: listing.title,
-        PRICE: parseFloat(listing.price),
-        CONDITION: listing.condition,
-        DESCRIPTION: listing.description || '',
-        CATEGORY: listing.category || '',
-        'OFFER SHIPPING': listing.offer_shipping || 'No',
-      }));
+      // AND filter out invalid listings (same logic as saveToDatabase)
+      const dbListings: MarketplaceListing[] = response.listings
+        .map(listing => ({
+          id: listing.id,
+          TITLE: listing.title,
+          PRICE: parseFloat(listing.price),
+          CONDITION: listing.condition,
+          DESCRIPTION: listing.description || '',
+          CATEGORY: listing.category || '',
+          'OFFER SHIPPING': listing.offer_shipping || 'No',
+        }))
+        .filter(listing => {
+          // Filter out invalid listings (must have non-empty TITLE, PRICE > 0, CONDITION)
+          const hasTitle = listing.TITLE && String(listing.TITLE).trim() !== '';
+          const hasPrice = listing.PRICE && Number(listing.PRICE) > 0;
+          const hasCondition = listing.CONDITION && String(listing.CONDITION).trim() !== '';
+          const isValid = hasTitle && hasPrice && hasCondition;
+
+          if (!isValid) {
+            addDebugLog('warn', `loadFromDatabase: Skipping invalid listing from database`, {
+              id: listing.id,
+              title: listing.TITLE,
+              price: listing.PRICE,
+              condition: listing.CONDITION,
+              reason: !hasTitle ? 'empty TITLE' : !hasPrice ? 'zero/missing PRICE' : 'empty CONDITION'
+            });
+          }
+          return isValid;
+        });
+
+      addDebugLog('info', `loadFromDatabase: Loaded ${dbListings.length} valid listings from database`);
 
       // Check for conflicts with local data
       // Bug #2 fix: Use functional update to avoid stale closure

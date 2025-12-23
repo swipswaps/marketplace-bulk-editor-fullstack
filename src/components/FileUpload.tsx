@@ -274,16 +274,29 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
               });
             }
 
-            // Check CONDITION (required - auto-fill with empty if missing)
+            // Check CONDITION (required - validate against Facebook Marketplace allowed values)
+            const validConditions = ['New', 'Used - Like New', 'Used - Good', 'Used - Fair'];
             let finalCondition = condition;
+
             if (!condition) {
-              finalCondition = '';
+              // Empty CONDITION - auto-fill with 'New'
+              finalCondition = 'New';
               autoFilledFields.push({
                 field: 'CONDITION',
                 originalValue: condition,
-                defaultValue: '',
-                reason: 'Field was empty in imported file'
+                defaultValue: 'New',
+                reason: 'Field was empty in imported file (auto-filled with "New")'
               });
+            } else if (!validConditions.includes(condition)) {
+              // Invalid CONDITION - auto-fill with closest match
+              const defaultCondition = 'Used - Like New'; // Default for invalid values like "Refurbished"
+              autoFilledFields.push({
+                field: 'CONDITION',
+                originalValue: condition,
+                defaultValue: defaultCondition,
+                reason: `Invalid value "${condition}" (must be: New, Used - Like New, Used - Good, Used - Fair). Auto-filled with "${defaultCondition}"`
+              });
+              finalCondition = defaultCondition;
             }
 
             // Check DESCRIPTION (optional but recommended)
@@ -585,6 +598,11 @@ export function FileUpload({ onDataLoaded, onTemplateDetected, currentTemplate, 
   // Full mode - empty state with integrated upload
   return (
     <>
+      {/* Screen reader announcements for file upload */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {isDragActive ? 'Drop file to upload' : 'Drag and drop area ready'}
+      </div>
+
       <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
         {/* Empty State */}
         <div className="max-w-md mx-auto">

@@ -465,6 +465,11 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
 
   return (
     <div className="overflow-x-auto">
+      {/* Screen reader announcements for dynamic content */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {data.length} listing{data.length !== 1 ? 's' : ''} in table. {selectedRows.size > 0 ? `${selectedRows.size} selected.` : ''}
+      </div>
+
       {/* Search and Actions Bar */}
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
@@ -540,8 +545,9 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-text"
                 title="Clear search"
+                aria-label="Clear search"
               >
-                <X size={16} />
+                <X size={16} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -680,8 +686,10 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                         }}
                         className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors select-text"
                         title="Column actions"
+                        aria-label={`Column actions for ${field}`}
+                        aria-expanded={columnActionMenu === field}
                       >
-                        <MoreVertical size={14} className="text-gray-500 dark:text-gray-400" />
+                        <MoreVertical size={14} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
                       </button>
 
                       {/* Dropdown Menu */}
@@ -1107,15 +1115,17 @@ export function DataTable({ data, onUpdate, sortField, sortDirection, onSortChan
                       onClick={() => handleDuplicate(listing.id)}
                       className="p-1 text-blue-600 hover:bg-blue-50 rounded select-text"
                       title="Duplicate"
+                      aria-label={`Duplicate listing: ${listing.TITLE}`}
                     >
-                      <Copy size={18} />
+                      <Copy size={18} aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => handleDelete(listing.id)}
                       className="p-1 text-red-600 hover:bg-red-50 rounded select-text"
                       title="Delete"
+                      aria-label={`Delete listing: ${listing.TITLE}`}
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={18} aria-hidden="true" />
                     </button>
                   </div>
                 </td>

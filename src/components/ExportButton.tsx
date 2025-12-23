@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, X, AlertTriangle, ChevronDown, Database, FileSpreadsheet } from 'lucide-react';
+import { Download, X, AlertTriangle, ChevronDown, Database, FileSpreadsheet, FileJson, FileText, Table } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { MarketplaceListing, TemplateMetadata } from '../types';
 import { validateListings, validateListing } from '../utils/validation';
@@ -100,6 +100,168 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
     } catch (error) {
       console.error('SQL export failed:', error);
       alert('Failed to export to SQL. Please try again.');
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to export to CSV');
+      return;
+    }
+
+    if (data.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    try {
+      const sortedData = getSortedData();
+
+      // Transform to backend format
+      const backendListings = sortedData.map(listing => ({
+        title: listing.TITLE,
+        price: listing.PRICE.toString(),
+        condition: listing.CONDITION,
+        description: listing.DESCRIPTION || '',
+        category: listing.CATEGORY || '',
+        offer_shipping: listing['OFFER SHIPPING'] || 'No',
+      }));
+
+      // Call backend API
+      const response = await fetch('/api/export/csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({ listings: backendListings })
+      });
+
+      if (!response.ok) throw new Error('CSV export failed');
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `marketplace-listings-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('CSV export failed:', error);
+      alert('Failed to export to CSV. Please try again.');
+    }
+  };
+
+  const handleExportJSON = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to export to JSON');
+      return;
+    }
+
+    if (data.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    try {
+      const sortedData = getSortedData();
+
+      // Transform to backend format
+      const backendListings = sortedData.map(listing => ({
+        title: listing.TITLE,
+        price: listing.PRICE.toString(),
+        condition: listing.CONDITION,
+        description: listing.DESCRIPTION || '',
+        category: listing.CATEGORY || '',
+        offer_shipping: listing['OFFER SHIPPING'] || 'No',
+      }));
+
+      // Call backend API
+      const response = await fetch('/api/export/json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({ listings: backendListings })
+      });
+
+      if (!response.ok) throw new Error('JSON export failed');
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `marketplace-listings-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('JSON export failed:', error);
+      alert('Failed to export to JSON. Please try again.');
+    }
+  };
+
+  const handleExportTXT = async () => {
+    if (!isAuthenticated) {
+      alert('Please login to export to TXT');
+      return;
+    }
+
+    if (data.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    try {
+      const sortedData = getSortedData();
+
+      // Transform to backend format
+      const backendListings = sortedData.map(listing => ({
+        title: listing.TITLE,
+        price: listing.PRICE.toString(),
+        condition: listing.CONDITION,
+        description: listing.DESCRIPTION || '',
+        category: listing.CATEGORY || '',
+        offer_shipping: listing['OFFER SHIPPING'] || 'No',
+      }));
+
+      // Call backend API
+      const response = await fetch('/api/export/text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({ listings: backendListings })
+      });
+
+      if (!response.ok) throw new Error('TXT export failed');
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `marketplace-listings-${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('TXT export failed:', error);
+      alert('Failed to export to TXT. Please try again.');
     }
   };
 
@@ -399,6 +561,48 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
                 </div>
               </button>
 
+              {/* CSV Export (requires auth) */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-text"
+                >
+                  <Table size={18} className="text-orange-600 dark:text-orange-400" />
+                  <div>
+                    <div className="font-medium">Export to CSV</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Comma-separated values</div>
+                  </div>
+                </button>
+              )}
+
+              {/* JSON Export (requires auth) */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleExportJSON}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-text"
+                >
+                  <FileJson size={18} className="text-purple-600 dark:text-purple-400" />
+                  <div>
+                    <div className="font-medium">Export to JSON</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">JavaScript Object Notation</div>
+                  </div>
+                </button>
+              )}
+
+              {/* TXT Export (requires auth) */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleExportTXT}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-text"
+                >
+                  <FileText size={18} className="text-gray-600 dark:text-gray-400" />
+                  <div>
+                    <div className="font-medium">Export to TXT</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Tab-delimited text</div>
+                  </div>
+                </button>
+              )}
+
               {/* SQL Export (requires auth) */}
               {isAuthenticated && (
                 <button
@@ -417,7 +621,7 @@ export function ExportButton({ data, sortField, sortDirection, template, onPrevi
               {!isAuthenticated && (
                 <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 select-text">
                   <Database size={14} className="inline mr-1" />
-                  Login to export to SQL
+                  Login to export to CSV, JSON, TXT, SQL
                 </div>
               )}
             </div>

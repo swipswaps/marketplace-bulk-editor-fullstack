@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix localStorage Migration</title>
+</head>
+<body>
+    <h1>localStorage Migration Tool</h1>
+    <button onclick="fixLocalStorage()">Fix localStorage Now</button>
+    <pre id="output"></pre>
+
+    <script>
+    function fixLocalStorage() {
+        const output = document.getElementById('output');
+        output.textContent = '=== Starting localStorage Migration ===\n\n';
+
+        // Get current listings
+        const stored = localStorage.getItem('listings');
+        if (!stored) {
+            output.textContent += 'No listings in localStorage\n';
+            return;
+        }
+
+        let listings;
+        try {
+            listings = JSON.parse(stored);
+        } catch (err) {
+            output.textContent += `Error parsing listings: ${err}\n`;
+            return;
+        }
+
+        output.textContent += `Found ${listings.length} listings\n\n`;
+
+        // Filter out invalid listings (empty TITLE, $0 PRICE, etc.)
+        const validListings = listings.filter(listing => {
+            // Check if listing has UPPERCASE fields (correct format)
+            const hasUppercase = 'TITLE' in listing;
+            
+            // Check if listing has lowercase fields (incorrect format from old syncWithDatabase)
+            const hasLowercase = 'title' in listing;
+
+            if (hasLowercase && !hasUppercase) {
+                output.textContent += `❌ Removing listing with lowercase fields: ${JSON.stringify(listing).substring(0, 100)}...\n`;
+                return false;
+            }
+
+            // Check if listing is valid (has TITLE, PRICE > 0, CONDITION)
+            const isValid = listing.TITLE && listing.PRICE && listing.CONDITION;
+            
+            if (!isValid) {
+                output.textContent += `❌ Removing invalid listing: TITLE="${listing.TITLE}", PRICE=${listing.PRICE}, CONDITION="${listing.CONDITION}"\n`;
+                return false;
+            }
+
+            return true;
+        });
+
+        output.textContent += `\n=== Results ===\n`;
+        output.textContent += `Original: ${listings.length} listings\n`;
+        output.textContent += `Valid: ${validListings.length} listings\n`;
+        output.textContent += `Removed: ${listings.length - validListings.length} listings\n\n`;
+
+        // Save cleaned listings
+        localStorage.setItem('listings', JSON.stringify(validListings));
+        output.textContent += '✅ localStorage updated!\n\n';
+        output.textContent += 'Please reload the page (F5) to see the changes.\n';
+    }
+    </script>
+</body>
+</html>
+

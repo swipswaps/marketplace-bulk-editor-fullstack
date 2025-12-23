@@ -137,6 +137,8 @@ export function BackendStatus({ className = '' }: BackendStatusProps) {
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full flex items-center justify-between gap-2 select-text"
+          aria-label={`Backend status: ${health.message}. Click to ${isExpanded ? 'collapse' : 'expand'} details.`}
+          aria-expanded={isExpanded}
         >
           <div className="flex items-center gap-2">
             {getStatusIcon()}
@@ -145,7 +147,7 @@ export function BackendStatus({ className = '' }: BackendStatusProps) {
               {health.message}
             </span>
           </div>
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {isExpanded ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
         </button>
 
         {/* Expanded Details */}

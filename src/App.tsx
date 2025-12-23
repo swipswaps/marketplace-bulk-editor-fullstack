@@ -9,6 +9,7 @@ import { UserMenu } from './components/UserMenu';
 import { SyncStatus } from './components/SyncStatus';
 import { DebugConsole } from './components/DebugConsole';
 import { OCRUpload } from './components/OCRUpload';
+import { ExportTabs } from './components/ExportTabs';
 import { Settings, Download, Upload } from 'lucide-react';
 import type { MarketplaceListing, TemplateMetadata } from './types';
 import { FileSpreadsheet, Trash2 } from 'lucide-react';
@@ -258,6 +259,14 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
+      {/* Skip to main content link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:p-4 focus:bg-blue-600 focus:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
@@ -456,7 +465,7 @@ function App() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 py-8">
+      <main id="main-content" className="flex-1 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Data Table Section - Show when we have data */}
           {listings.length > 0 ? (
@@ -465,20 +474,25 @@ function App() {
               {exportPreviewContent ? (
                 exportPreviewContent
               ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                  <div className="p-6">
-                    <DataTable
-                      data={listings}
-                      onUpdate={updateListingsWithHistory}
-                      sortField={sortField}
-                      sortDirection={sortDirection}
-                      onSortChange={(field, direction) => {
-                        setSortField(field);
-                        setSortDirection(direction);
-                      }}
-                    />
+                <>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                    <div className="p-6">
+                      <DataTable
+                        data={listings}
+                        onUpdate={updateListingsWithHistory}
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSortChange={(field, direction) => {
+                          setSortField(field);
+                          setSortDirection(direction);
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  {/* Export Tabs - CSV, JSON, TXT, XLSX, SQL */}
+                  <ExportTabs data={listings} />
+                </>
               )}
             </div>
           ) : (
